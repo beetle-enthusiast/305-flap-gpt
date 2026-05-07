@@ -87,3 +87,4 @@ vsim.dbg
 !.vscode/launch.json
 !.vscode/extensions.json
 !.vscode/*.code-snippets
+vhdl-linter.yml
