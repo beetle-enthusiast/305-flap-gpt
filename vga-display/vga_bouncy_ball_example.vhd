@@ -22,8 +22,12 @@ END COMPONENT;
 
 --PLL component signals
 COMPONENT PLL
-	PORT(	refclk, reset: IN std_logic;
-			outclk0, export: OUT std_logic);
+	port (
+		refclk   : in  std_logic := '0'; --  refclk.clk
+		rst      : in  std_logic := '0'; --   reset.reset
+		outclk_0 : out std_logic;        -- outclk0.clk
+		locked   : out std_logic         --  locked.export
+	);
 END COMPONENT;
 
 --BOUNCY_BALL component signals
@@ -45,11 +49,10 @@ SIGNAL h_sync_out, v_sync_out	: std_logic;
 
 BEGIN  
 
-reset <= '0';
 
 -- Instantiate PLL component to generate 25MHz clock from 50MHz input clock		
 PLL: PLL
-PORT MAP (refclk => CLOCK_50, reset => reset, outclk0 => clk_25MHz, export => open);
+PORT MAP (refclk => CLOCK_50, rst => '0', outclk_0 => clk_25MHz, locked => open);
 
 -- Instantiate BOUNCY_BALL component
 BOUNCY_BALL: bouncy_ball
