@@ -13,11 +13,12 @@ END bouncy_ball;
 
 architecture behavior of bouncy_ball is
 
-SIGNAL ball_on					: std_logic;
+SIGNAL ball_on, ball_collision, ball_white: std_logic;
 SIGNAL size 					: std_logic_vector(9 DOWNTO 0);  
 SIGNAL ball_y_pos				: std_logic_vector(9 DOWNTO 0);
 SiGNAL ball_x_pos				: std_logic_vector(10 DOWNTO 0);
 SIGNAL ball_y_motion			: std_logic_vector(9 DOWNTO 0);
+
 
 BEGIN           
 
@@ -31,10 +32,13 @@ ball_on <= '1' when ( ('0' & ball_x_pos <= '0' & pixel_column + size) and ('0' &
 
 
 -- Colours for pixel data on video signal
--- Changing the background and ball colour by pushbuttons
-Red <=  pb1;
-Green <= (not pb2) and (not ball_on);
-Blue <=  not ball_on;
+-- Changing the background colour by pushbuttons
+-- Ball colour alternates between white and black
+ball_white <= ball_on and ball_collision;
+
+Red   <= (pb1 and (not ball_on)) or ball_white;
+Green <= ((not pb2) and (not ball_on)) or ball_white;
+Blue  <= (pb2 and (not ball_on)) or ball_white;
 
 
 Move_Ball: process (vert_sync)  	
@@ -43,9 +47,15 @@ begin
 	if (rising_edge(vert_sync)) then			
 		-- Bounce off top or bottom of the screen
 		if ( ('0' & ball_y_pos >= CONV_STD_LOGIC_VECTOR(479,10) - size) ) then
+		   -- We have hit the bottom => move to top of screen
 			ball_y_motion <= - CONV_STD_LOGIC_VECTOR(2,10);
+			
 		elsif (ball_y_pos <= size) then 
+		   -- We have hit the top => move to top of bottom
 			ball_y_motion <= CONV_STD_LOGIC_VECTOR(2,10);
+			--alternate ball colour
+			ball_collision <= not ball_collision;
+			
 		end if;
 		-- Compute next ball Y position
 		ball_y_pos <= ball_y_pos + ball_y_motion;
