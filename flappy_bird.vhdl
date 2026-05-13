@@ -6,8 +6,7 @@ use work.text_pkg.all;
 
 entity flappy_bird is
   port (
-    CLOCK_50  : in  std_logic;
-    KEY       : in  std_logic_vector(3 downto 0);
+    push_button_1, push_button_2, CLOCK_50  : in  std_logic;
     LEDR      : out std_logic_vector(9 downto 0);
     HEX3, HEX2, HEX1, HEX0  : out std_logic_vector(6 downto 0);
     PS2_CLK, PS2_DAT  : inout std_logic;
@@ -58,6 +57,10 @@ architecture hw_interface of flappy_bird is
 
 
   signal r_mux, g_mux, b_mux : std_logic_vector(3 downto 0);
+  
+  --Signals for ball
+  signal ball_r, ball_g, ball_b : std_logic;
+  
 
 
 begin
@@ -80,6 +83,13 @@ begin
       mouse_cursor_row => mouse_row,
       mouse_cursor_column => mouse_col
     );
+
+    --For ball movement
+    -- Instantiate BOUNCY_BALL component
+    BOUNCY_BALL_COMPONENT: entity work.bouncy_ball
+    PORT MAP (	click => left_click, pb1 => push_button_1, pb2 => push_button_2, clk => CLOCK_25, vert_sync => vs,
+          pixel_row => pixel_row, pixel_column => pixel_column,
+          red => ball_r, green => ball_g, blue => ball_b);
 
     -- For text display 
     -- 1. A instance of VGA_SYNC to generate the sync signals and pixel coordinates
@@ -141,14 +151,14 @@ begin
   scale_val <= to_integer(unsigned(SW(1 downto 0))) + 1; -- Scale factor from 1 to 4 based on the value of the first two switches
 
   -- Mux to switch between start and pressed text based on button press
-  r_mux <= r_press when KEY(0) = '0' else r_start;
-  g_mux <= g_press when KEY(0) = '0' else g_start;
-  b_mux <= b_press when KEY(0) = '0' else b_start;
+  r_mux <= r_press when push_button_1 = '0' else r_start;
+  g_mux <= g_press when push_button_1 = '0' else g_start;
+  b_mux <= b_press when push_button_1 = '0' else b_start;
 
   -- Connect the mux outputs to the VGA outputs
-  red_in <= r_mux(3);
-  green_in <= g_mux(3);
-  blue_in <= b_mux(3);
+  red_in <= r_mux(3) or ball_r;
+  green_in <= g_mux(3) or ball_g;
+  blue_in <= b_mux(3) or ball_b;
 
   VGA_R <= (others => red_sig);
   VGA_G <= (others => green_sig);
@@ -156,5 +166,10 @@ begin
 
   VGA_HS <= hs;
   VGA_VS <= vs;
+    
+	-- TEst
+	LEDR <= (others => left_click);
+	hard_reset <= '0';
+ 
   
   end architecture;
