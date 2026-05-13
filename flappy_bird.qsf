@@ -473,6 +473,10 @@ set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_RO
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name FITTER_EFFORT "FAST FIT"
 set_global_assignment -name VHDL_FILE flappy_bird.vhdl
+set_global_assignment -name VHDL_FILE "vga-display/vga_text.vhdl"
+set_global_assignment -name VHDL_FILE "vga-display/vga_sync_sb.vhdl"
+set_global_assignment -name VHDL_FILE "vga-display/text_pkg.vhd"
+set_global_assignment -name VHDL_FILE "vga-display/char_rom.vhd"
 set_global_assignment -name QIP_FILE ip/pll_25mhz/pll_25mhz.qip
 set_global_assignment -name SIP_FILE ip/pll_25mhz/pll_25mhz.sip
 set_global_assignment -name VHDL_FILE mouse/mouse.vhdl
