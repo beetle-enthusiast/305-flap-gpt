@@ -33,7 +33,7 @@ END COMPONENT;
 --BOUNCY_BALL component signals
 COMPONENT bouncy_ball
 	PORT
-		( pb1, pb2, clk, vert_sync	: IN std_logic;
+		( click, pb1, pb2, clk, vert_sync	: IN std_logic;
 		  pixel_row, pixel_column	: IN std_logic_vector(9 DOWNTO 0);
 		  red, green, blue 			: OUT std_logic);		
 END COMPONENT;
@@ -53,7 +53,7 @@ PORT MAP (refclk => CLOCK_50, rst => '0', outclk_0 => clk_25MHz, locked => open)
 
 -- Instantiate BOUNCY_BALL component
 BOUNCY_BALL_COMPONENT: bouncy_ball
-PORT MAP (	pb1 => pb_colour_1, pb2 => pb_colour_2, clk => clk_25MHz, vert_sync => v_sync,
+PORT MAP (	click => left_click, pb1 => pb_colour_1, pb2 => pb_colour_2, clk => clk_25MHz, vert_sync => v_sync,
 			pixel_row => pixel_row, pixel_column => pixel_column,
 			red => red, green => green, blue => blue);
 
