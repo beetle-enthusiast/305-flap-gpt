@@ -2,6 +2,7 @@ LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.all;
 USE  IEEE.STD_LOGIC_ARITH.all;
 USE  IEEE.STD_LOGIC_SIGNED.all;
+use ieee.numeric_std.all;
 
 
 ENTITY bouncy_ball IS
@@ -28,13 +29,13 @@ BEGIN
 
 size <= CONV_STD_LOGIC_VECTOR(15,10); -- ball radius is 8 pixels
 pipe_width_radius <= CONV_STD_LOGIC_VECTOR(10, 10); -- pipe width is 20 pixels 
-pipe_height_radius <= CONV_STD_LOGIC_VECTOR(50, 10); -- pipe height is 100 pixels 
+pipe_height_radius <= CONV_STD_LOGIC_VECTOR(200, 10); -- pipe height is 400 pixels 
 
 -- ball_x_pos and ball_y_pos show the (x,y) for the centre of ball
 ball_x_pos <= CONV_STD_LOGIC_VECTOR(400,11);
 
 -- pipe_x_pos and pipe_y_pos show the (x,y) for position for the pipe
-pipe_y_pos <= CONV_STD_LOGIC_VECTOR(479 - 50, 10); -- Example y position for the pipe 
+pipe_y_pos <= CONV_STD_LOGIC_VECTOR(479 - 200, 10); -- Example y position for the pipe 
 
 -- Determine the pixels where the ball should be drawn 
 ball_on <= '1' when ( ('0' & ball_x_pos <= '0' & pixel_column + size) 
@@ -127,6 +128,7 @@ end process Move_Ball;
 Move_Pipe: process (vert_sync) 
 VARIABLE pipe_x_motion: std_logic_vector(9 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(0, 10); 	
 VARIABLE at_end: std_logic:= '0';
+VARIABLE starting_pos: integer:= 600; -- arbitrary constant 
 
 begin
 	-- Move ball once every vertical sync
@@ -136,9 +138,8 @@ begin
 		pipe_x_motion := - CONV_STD_LOGIC_VECTOR(1, 10);
 		
 		-- Clamp to boundaries
-		if (pipe_x_pos + pipe_x_motion <= CONV_STD_LOGIC_VECTOR(0, 11) + pipe_width_radius) then
-			 --pipe_x_pos<= CONV_STD_LOGIC_VECTOR(500, 11); -- if at left end of screen, bring it back to the right
-			 pipe_x_motion := CONV_STD_LOGIC_VECTOR(500,10);
+		if (pipe_x_pos + pipe_x_motion <= CONV_STD_LOGIC_VECTOR(0, 11) - pipe_width_radius) then
+			 pipe_x_motion := CONV_STD_LOGIC_VECTOR(starting_pos,10);
 		end if;
 		
 		-- Compute next ball Y position (if at top or bottom, then don't go further up)
