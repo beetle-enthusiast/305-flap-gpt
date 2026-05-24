@@ -43,8 +43,8 @@ architecture hw_interface of flappy_bird is
 
   -- Internal signals for VGA
   signal pixel_row, pixel_column : std_logic_vector(9 downto 0);
-  signal red_in, green_in, blue_in : std_logic;
-  signal red_sig, green_sig, blue_sig : std_logic;
+  signal red_in, green_in, blue_in : std_logic_vector(3 downto 0);
+  signal red_sig, green_sig, blue_sig : std_logic_vector(3 downto 0);
   signal hs, vs : std_logic;
 
   -- Signals for text display
@@ -60,6 +60,9 @@ architecture hw_interface of flappy_bird is
   
   --Signals for ball
   signal ball_r, ball_g, ball_b : std_logic;
+
+  -- Signals for background
+  signal bg_r, bg_g, bg_b : std_logic_vector(3 downto 0);
   
 
 
@@ -146,6 +149,15 @@ begin
     blue_out => b_press
   );
 
+  VGA_BACKGROUND_inst : entity work.VGA_BACKGROUND
+    port map (
+        pixel_row => pixel_row,
+        pixel_column => pixel_column,
+        clock_25Mhz => CLOCK_25,
+        red_out => bg_r,
+        green_out => bg_g,
+        blue_out => bg_b
+    );
 
   -- Scale from switchs
   scale_val <= to_integer(unsigned(SW(1 downto 0))) + 1; -- Scale factor from 1 to 4 based on the value of the first two switches
@@ -156,13 +168,16 @@ begin
   b_mux <= b_press when push_button_1 = '0' else b_start;
 
   -- Connect the mux outputs to the VGA outputs
-  red_in <= r_mux(3) or ball_r;
-  green_in <= g_mux(3) or ball_g;
-  blue_in <= b_mux(3) or ball_b;
+  --red_in <= r_mux(3) or ball_r or 
+  red_in <= bg_r; -- Combine text, ball, and background red signals
+  --green_in <= g_mux(3) or ball_g or 
+  green_in <= bg_g; -- Combine text, ball, and background green signals
+  --blue_in <= b_mux(3) or ball_b or 
+  blue_in <= bg_b; -- Combine text, ball, and background blue signals
 
-  VGA_R <= (others => red_sig);
-  VGA_G <= (others => green_sig);
-  VGA_B <= (others => blue_sig);
+  VGA_R <= red_sig;
+VGA_G <= green_sig;
+VGA_B <= blue_sig;
 
   VGA_HS <= hs;
   VGA_VS <= vs;
