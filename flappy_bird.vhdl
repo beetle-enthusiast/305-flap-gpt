@@ -61,6 +61,8 @@ architecture hw_interface of flappy_bird is
   --Signals for ball
   signal ball_r, ball_g, ball_b : std_logic;
   
+  --Signals for pipe
+  signal pipe_r, pipe_g, pipe_b : std_logic;
 
 
 begin
@@ -90,6 +92,12 @@ begin
     PORT MAP (	click => left_click, pb1 => push_button_1, pb2 => push_button_2, clk => CLOCK_25, vert_sync => vs,
           pixel_row => pixel_row, pixel_column => pixel_column,
           red => ball_r, green => ball_g, blue => ball_b);
+
+    -- For pipe movement
+    -- Instantiate PIPE component
+    PIPE_COMPONENT: entity work.pipe
+    PORT MAP (vert_sync => vs, pixel_row => pixel_row, pixel_column => pixel_column,
+          red => pipe_r, green => pipe_g, blue => pipe_b);
 
     -- For text display 
     -- 1. A instance of VGA_SYNC to generate the sync signals and pixel coordinates
@@ -156,9 +164,9 @@ begin
   b_mux <= b_press when push_button_1 = '0' else b_start;
 
   -- Connect the mux outputs to the VGA outputs
-  red_in <= r_mux(3) or ball_r;
-  green_in <= g_mux(3) or ball_g;
-  blue_in <= b_mux(3) or ball_b;
+  red_in <= r_mux(3) or ball_r or pipe_r;
+  green_in <= g_mux(3) or ball_g or pipe_g;
+  blue_in <= b_mux(3) or ball_b or pipe_b;
 
   VGA_R <= (others => red_sig);
   VGA_G <= (others => green_sig);
