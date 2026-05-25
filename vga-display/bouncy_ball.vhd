@@ -41,9 +41,9 @@ ball_on <= '1' when ( ('0' & ball_x_pos <= '0' & pixel_column + size)
 -- Ball colour alternates between white and black
 ball_white <= ball_on and ball_collision;
 
-Red   <= (pb1 and (not ball_on)) or ball_white;
-Green <= ((not pb2) and (not ball_on)) or ball_white;
-Blue  <= (pb2 and (not ball_on)) or ball_white;
+Red   <= ball_white;
+Green <= ball_white;
+Blue  <= ball_white;
 
 
 

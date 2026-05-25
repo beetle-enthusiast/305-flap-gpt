@@ -7,73 +7,80 @@ use ieee.numeric_std.all;
 
 ENTITY pipe IS
 	PORT
-		(vert_sync	: IN std_logic;
-          pixel_row, pixel_column	: IN std_logic_vector(9 DOWNTO 0);
-		  red, green, blue 			: OUT std_logic);		
+		(start, vert_sync	: IN std_logic;
+        pixel_row, pixel_column	: IN std_logic_vector(9 DOWNTO 0);
+		  pipe_x_pos: OUT std_logic_vector(10 DOWNTO 0);
+		  pipe_y_pos: OUT std_logic_vector(9 DOWNTO 0);
+		  pipe_on: OUT std_logic);		
 END pipe;
 
 architecture behavior of pipe is
-
-SIGNAL pipe_x_pos				: std_logic_vector(10 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(500, 11);
-SIGNAL pipe_y_pos				: std_logic_vector(9 DOWNTO 0);
-SIGNAL pipe_width_radius, pipe_height_radius : std_logic_vector(9 DOWNTO 0);
-SIGNAL pipe_on, pipe_gap	: std_logic;
+SIGNAL pipe_gap_on			: std_logic;
+SIGNAL pipe_width_radius	: std_logic_vector(10 DOWNTO 0);
+SIGNAL pipe_height_radius  : std_logic_vector(9 DOWNTO 0);
 SIGNAL gap_constant			: std_logic_vector (9 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(50, 10);
-
-
-
+SIGNAL pipe_x_temp_pos		: std_logic_vector (10 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(639, 11);
+SIGNAL pipe_y_temp_pos		: std_logic_vector (9 DOWNTO 0);
+SIGNAL started					: std_logic:= '0';
 BEGIN           
 
-pipe_width_radius <= CONV_STD_LOGIC_VECTOR(10, 10); -- pipe width is 20 pixels 
+pipe_width_radius <= CONV_STD_LOGIC_VECTOR(10, 11); -- pipe width is 20 pixels 
 pipe_height_radius <= CONV_STD_LOGIC_VECTOR(200, 10); -- pipe height is 400 pixels 
 
 -- pipe_x_pos and pipe_y_pos show the (x,y) for position for the pipe
-pipe_y_pos <= CONV_STD_LOGIC_VECTOR(479 - 200, 10); -- Example y position for the pipe 
+pipe_y_temp_pos <= CONV_STD_LOGIC_VECTOR(479 - 200, 10); -- Example y position for the pipe 
 
 -- Determine the pixels where the pipe should be drawn 
-pipe_on <= '1' when ( ('0' & pipe_x_pos <= '0' & pixel_column + pipe_width_radius) 
-								and ('0' & pixel_column <= '0' & pipe_x_pos + pipe_width_radius) 	-- x_pos <= pixel_column <= x_pos + pipe_width_radius
-								and ('0' & pipe_y_pos <= '0' & pixel_row + pipe_height_radius) 
-								and ('0' & pixel_row <= '0' & pipe_y_pos + pipe_height_radius) )  
+
+pipe_gap_on <= '1' when (('0' & pipe_x_temp_pos <= '0' & pixel_column + pipe_width_radius) 
+								and ('0' & pixel_column <= '0' & pipe_x_temp_pos + pipe_width_radius) 
+								and ('0' & pipe_y_temp_pos <= '0' & pixel_row + gap_constant) 
+								and ('0' & pixel_row <= '0' & pipe_y_temp_pos + gap_constant))
+					else
+				'0';
+				
+pipe_on <= '1' when ( ('0' & pipe_x_temp_pos <= '0' & pixel_column + pipe_width_radius) 
+								and ('0' & pixel_column <= '0' & pipe_x_temp_pos + pipe_width_radius) 	-- x_pos <= pixel_column <= x_pos + pipe_width_radius
+								and ('0' & pipe_y_temp_pos <= '0' & pixel_row + pipe_height_radius) 
+								and ('0' & pixel_row <= '0' & pipe_y_temp_pos + pipe_height_radius)
+								and pipe_gap_on = '0')  
 					else	
 				'0';
 				
--- Determine where to put the gap
-pipe_gap <= '1' when (('0' & pipe_x_pos <= '0' & pixel_column + pipe_width_radius) 
-								and ('0' & pixel_column <= '0' & pipe_x_pos + pipe_width_radius) 
-								and ('0' & pipe_y_pos <= '0' & pixel_row + gap_constant) 
-								and ('0' & pixel_row <= '0' & pipe_y_pos + gap_constant))
-					else
-				'0';
-
--- Colours for pixel data on video signal
-Red   <= pipe_on AND not pipe_gap;
-Green <= pipe_gap;
-Blue  <= pipe_gap;
 
 Move_Pipe: process (vert_sync) 
-VARIABLE pipe_x_motion: std_logic_vector(9 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(0, 10); 	
-VARIABLE at_end: std_logic:= '0';
-VARIABLE starting_pos: integer:= 600; -- arbitrary constant 
+VARIABLE pipe_x_motion: std_logic_vector(10 DOWNTO 0):= -CONV_STD_LOGIC_VECTOR(1, 11); 	
+VARIABLE starting_pos: std_logic_vector (10 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(639, 11); 
+VARIABLE end_pos: std_logic_vector (10 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(0, 11); 
 
 begin
 	-- Move ball once every vertical sync
 	if (rising_edge(vert_sync)) then
-			
-		-- Move the pipe to the left
-		pipe_x_motion := - CONV_STD_LOGIC_VECTOR(1, 10);
-		
-		-- Clamp to boundaries
-		if (pipe_x_pos + pipe_x_motion <= CONV_STD_LOGIC_VECTOR(0, 11) - pipe_width_radius) then
-			 pipe_x_motion := CONV_STD_LOGIC_VECTOR(starting_pos,10);
-		end if;
-		
-		-- Compute next ball Y position (if at top or bottom, then don't go further up)
-		pipe_x_pos <= pipe_x_pos + pipe_x_motion;
-
-		
+	
+			-- So that pipes still move after they have been started
+		  if (start = '1') then
+            started <= '1';
+        end if;
+	
+		 if (start = '1' or started = '1') then
+		 
+			  if (pipe_x_temp_pos <= end_pos) then
+					pipe_x_temp_pos <= starting_pos;
+					
+			  else
+					pipe_x_temp_pos <= pipe_x_temp_pos + pipe_x_motion;
+			  end if;
+			  
+		 end if;
 	end if;
+
 end process Move_Pipe;
+
+-- Assign to outputs
+pipe_x_pos <= pipe_x_temp_pos;
+pipe_y_pos <= pipe_y_temp_pos;
+
+
 
 END behavior;
 

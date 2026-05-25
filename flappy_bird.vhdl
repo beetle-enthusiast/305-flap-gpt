@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+USE  IEEE.STD_LOGIC_SIGNED.all;
 
 use work.text_pkg.all;
 
@@ -62,7 +63,12 @@ architecture hw_interface of flappy_bird is
   signal ball_r, ball_g, ball_b : std_logic;
   
   --Signals for pipe
-  signal pipe_r, pipe_g, pipe_b : std_logic;
+  signal pipe_r, pipe_g, pipe_b, pipe2_start, pipe3_start, pipe_on, pipe1_on, pipe2_on, pipe3_on: std_logic;
+  signal pipe1_x_pos, pipe2_x_pos, pipe3_x_pos: std_logic_vector(10 downto 0);
+  signal pipe1_y_pos, pipe2_y_pos, pipe3_y_pos: std_logic_vector(9 downto 0);
+  
+  
+
 
 
 begin
@@ -95,9 +101,32 @@ begin
 
     -- For pipe movement
     -- Instantiate PIPE component
-    PIPE_COMPONENT: entity work.pipe
-    PORT MAP (vert_sync => vs, pixel_row => pixel_row, pixel_column => pixel_column,
-          red => pipe_r, green => pipe_g, blue => pipe_b);
+    PIPE1_COMPONENT: entity work.pipe
+    PORT MAP (vert_sync => vs, 
+				  start=> '1', 
+				  pixel_row => pixel_row, 
+				  pixel_column => pixel_column,
+				  pipe_x_pos => pipe1_x_pos,
+				  pipe_y_pos => pipe1_y_pos,
+				  pipe_on => pipe1_on);
+				  
+	PIPE2_COMPONENT: entity work.pipe
+    PORT MAP (vert_sync => vs, 
+				  start=> pipe2_start, 
+				  pixel_row => pixel_row, 
+				  pixel_column => pixel_column,
+				  pipe_x_pos => pipe2_x_pos,
+				  pipe_y_pos => pipe2_y_pos,
+				  pipe_on => pipe2_on);
+				  
+	PIPE3_COMPONENT: entity work.pipe
+    PORT MAP (vert_sync => vs, 
+				  start=> pipe3_start, 
+				  pixel_row => pixel_row, 
+				  pixel_column => pixel_column,
+				  pipe_x_pos => pipe3_x_pos,
+				  pipe_y_pos => pipe3_y_pos,
+				  pipe_on => pipe3_on);
 
     -- For text display 
     -- 1. A instance of VGA_SYNC to generate the sync signals and pixel coordinates
@@ -154,6 +183,17 @@ begin
     blue_out => b_press
   );
 
+  -- Pipe logic
+  pipe3_start<= '1' when pipe2_x_pos <= std_logic_vector(to_unsigned(425, 11))
+						  else 
+					 '0';
+					 
+  pipe2_start<= '1' when pipe1_x_pos <= std_logic_vector(to_unsigned(425, 11))
+						  else 
+					 '0';
+		
+  pipe_on <= pipe1_on or pipe2_on or pipe3_on;
+  
 
   -- Scale from switchs
   scale_val <= to_integer(unsigned(SW(1 downto 0))) + 1; -- Scale factor from 1 to 4 based on the value of the first two switches
@@ -164,9 +204,9 @@ begin
   b_mux <= b_press when push_button_1 = '0' else b_start;
 
   -- Connect the mux outputs to the VGA outputs
-  red_in <= r_mux(3) or ball_r or pipe_r;
-  green_in <= g_mux(3) or ball_g or pipe_g;
-  blue_in <= b_mux(3) or ball_b or pipe_b;
+  red_in   <= '0' when pipe_on = '1' else r_mux(3) or ball_r;
+  green_in <= '1' when pipe_on = '1' else g_mux(3) or ball_g or '1';
+  blue_in  <= '0' when pipe_on = '1' else b_mux(3) or ball_b or '1';
 
   VGA_R <= (others => red_sig);
   VGA_G <= (others => green_sig);
