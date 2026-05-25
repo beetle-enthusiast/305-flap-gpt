@@ -3,7 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.custom_types.vhdl;
+use work.custom_types.all;
 
 --  Control inputs
 --    PLAY: Selects options and play/pauses the active game
@@ -33,19 +33,18 @@ entity game_fsm is
     reset, pause  : out std_logic;
 
     -- Status signals
-    player_dead : in  std_logic;
+    player_dead : in  std_logic
   );
 end game_fsm;
 
 architecture shmoovement of game_fsm is
 
-  signal current_state  : game_state  := START; -- Initialised at start menu
-
-  variable play_pressed, restart_pressed  : std_logic := '0';
+  signal current_state  : game_state  := START_MENU; -- Initialised at start menu
 
 begin
 
   fsm : process(clk, PLAY, RESTART)
+    variable play_pressed, restart_pressed  : std_logic := '0';
   begin
   
     if rising_edge(clk) then
@@ -93,7 +92,7 @@ begin
       -- If some states do not have a play button input, 
       -- play_pressed should not be set HIGH in those states
       -- Alternatively continuously set pray_pressed LOW
-      play_pressed <= '1';
+      play_pressed := '1';
     end if;
 
     if rising_edge(RESTART) then
