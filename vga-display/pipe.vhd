@@ -7,7 +7,7 @@ use ieee.numeric_std.all;
 
 ENTITY pipe IS
 	PORT
-		( vert_sync	: IN std_logic;
+		(vert_sync	: IN std_logic;
           pixel_row, pixel_column	: IN std_logic_vector(9 DOWNTO 0);
 		  red, green, blue 			: OUT std_logic);		
 END pipe;
@@ -17,7 +17,9 @@ architecture behavior of pipe is
 SIGNAL pipe_x_pos				: std_logic_vector(10 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(500, 11);
 SIGNAL pipe_y_pos				: std_logic_vector(9 DOWNTO 0);
 SIGNAL pipe_width_radius, pipe_height_radius : std_logic_vector(9 DOWNTO 0);
-SIGNAL pipe_on					: std_logic;
+SIGNAL pipe_on, pipe_gap	: std_logic;
+SIGNAL gap_constant			: std_logic_vector (9 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(50, 10);
+
 
 
 BEGIN           
@@ -35,11 +37,19 @@ pipe_on <= '1' when ( ('0' & pipe_x_pos <= '0' & pixel_column + pipe_width_radiu
 								and ('0' & pixel_row <= '0' & pipe_y_pos + pipe_height_radius) )  
 					else	
 				'0';
+				
+-- Determine where to put the gap
+pipe_gap <= '1' when (('0' & pipe_x_pos <= '0' & pixel_column + pipe_width_radius) 
+								and ('0' & pixel_column <= '0' & pipe_x_pos + pipe_width_radius) 
+								and ('0' & pipe_y_pos <= '0' & pixel_row + gap_constant) 
+								and ('0' & pixel_row <= '0' & pipe_y_pos + gap_constant))
+					else
+				'0';
 
 -- Colours for pixel data on video signal
-Red   <= pipe_on;
-Green <= not pipe_on;
-Blue  <= not pipe_on;
+Red   <= pipe_on AND not pipe_gap;
+Green <= pipe_gap;
+Blue  <= pipe_gap;
 
 Move_Pipe: process (vert_sync) 
 VARIABLE pipe_x_motion: std_logic_vector(9 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(0, 10); 	
