@@ -32,6 +32,11 @@ architecture hw_interface of flappy_bird is
   signal left_click, right_click  : std_logic;
   signal mouse_row, mouse_col     : std_logic_vector(9 downto 0);
 
+  SIGNAL cursor_r, cursor_g, cursor_b : std_logic_vector(3 downto 0);
+  SIGNAL cursor_on : std_logic;
+  SIGNAL row_int, col_int : integer;
+  SIGNAL mouse_row_int, mouse_col_int : integer;
+
   component pll_25mhz is
     port (
       refclk   : in  std_logic; --  refclk.clk
@@ -47,26 +52,45 @@ architecture hw_interface of flappy_bird is
   signal red_sig, green_sig, blue_sig : std_logic_vector(3 downto 0);
   signal hs, vs : std_logic;
 
-  -- Signals for text display
-  signal r_start, g_start, b_start : std_logic_vector(3 downto 0);
-  signal r_press,g_press,b_press : std_logic_vector(3 downto 0);
-  signal scale_val : integer;
+  -- -- Signals for text display
+  -- signal r_start, g_start, b_start : std_logic_vector(3 downto 0);
+  -- signal r_press,g_press,b_press : std_logic_vector(3 downto 0);
+  -- signal scale_val : integer;
 
-  signal msg_start : text_string(1 to 12) := "PRESS BUTTON";
-  signal msg_pressed : text_string(1 to 14) := "BUTTON PRESSED";
+  -- signal msg_start : text_string(1 to 12) := "PRESS BUTTON";
+  -- signal msg_pressed : text_string(1 to 14) := "BUTTON PRESSED";
 
 
-  signal r_mux, g_mux, b_mux : std_logic_vector(3 downto 0);
+  -- signal r_mux, g_mux, b_mux : std_logic_vector(3 downto 0);
   
-  --Signals for ball
-  signal ball_r, ball_g, ball_b : std_logic;
+  -- --Signals for ball
+  -- signal ball_r, ball_g, ball_b : std_logic;
 
   -- Signals for background
+
   signal bg_r, bg_g, bg_b : std_logic_vector(3 downto 0);
+
+  SIGNAL r_screen, g_screen, b_screen : std_logic_vector(3 downto 0);
   
+
+  --Signal for mouse cursor
 
 
 begin
+
+
+  -- GENERATE CURSOR TEMP.
+
+  row_int <= to_integer(unsigned(pixel_row));
+  col_int <= to_integer(unsigned(pixel_column));
+  mouse_row_int <= to_integer(unsigned(mouse_row));
+  mouse_col_int <= to_integer(unsigned(mouse_col));
+
+  cursor_on <= '1' when (row_int >= mouse_row_int and row_int < mouse_row_int + 8 and col_int >= mouse_col_int and col_int < mouse_col_int + 8) else '0';
+
+  cursor_r <= "1111" when cursor_on = '1' else "0000";
+  cursor_g <= "0000" when cursor_on = '1' else "0000";
+  cursor_b <= "1111" when cursor_on = '1' else "0000";
 
   CLK_DIV_2 : pll_25mhz
     port map (
@@ -87,13 +111,7 @@ begin
       mouse_cursor_column => mouse_col
     );
 
-    --For ball movement
-    -- Instantiate BOUNCY_BALL component
-    BOUNCY_BALL_COMPONENT: entity work.bouncy_ball
-    PORT MAP (	click => left_click, pb1 => push_button_1, pb2 => push_button_2, clk => CLOCK_25, vert_sync => vs,
-          pixel_row => pixel_row, pixel_column => pixel_column,
-          red => ball_r, green => ball_g, blue => ball_b);
-
+   
     -- For text display 
     -- 1. A instance of VGA_SYNC to generate the sync signals and pixel coordinates
     VGA_SYNC_inst : entity work.VGA_SYNC
@@ -113,41 +131,7 @@ begin
 
   );
 
-  -- Text display instance for start_text
-  VGA_TEXT_inst : entity work.VGA_TEXT
-    port map (
-    pixel_row => pixel_row,
-    pixel_column => pixel_column,
-    clock_25Mhz => CLOCK_25,
-    message => msg_start,
-    start_row => 100,
-    start_col => 80,
-    scale => scale_val,
-    text_r => "1111",
-    text_g => "1111",
-    text_b => "1111",
-    red_out => r_start,
-    green_out => g_start,
-    blue_out => b_start
-    );
 
-  -- Text display instance for pressed_text
-  VGA_PRESSED_TEXT : entity work.VGA_TEXT
-    port map (
-   pixel_row => pixel_row,
-    pixel_column => pixel_column,
-    clock_25Mhz => CLOCK_25,
-    message => msg_pressed,
-    start_row => 100,
-    start_col => 80,
-    scale => scale_val,
-    text_r => "1111",
-    text_g => "1111",
-    text_b => "1111",
-    red_out => r_press,
-    green_out => g_press,
-    blue_out => b_press
-  );
 
   VGA_BACKGROUND_inst : entity work.VGA_BACKGROUND
     port map (
@@ -159,21 +143,29 @@ begin
         blue_out => bg_b
     );
 
-  -- Scale from switchs
-  scale_val <= to_integer(unsigned(SW(1 downto 0))) + 1; -- Scale factor from 1 to 4 based on the value of the first two switches
 
-  -- Mux to switch between start and pressed text based on button press
-  r_mux <= r_press when push_button_1 = '0' else r_start;
-  g_mux <= g_press when push_button_1 = '0' else g_start;
-  b_mux <= b_press when push_button_1 = '0' else b_start;
+    VGA_START_screen : entity work.start_screen
+
+    port map (
+        pixel_row => pixel_row,
+        pixel_column => pixel_column,
+        clock_25Mhz => CLOCK_25,
+        mode => SW(0),
+        mouse_click  => left_click,
+        mouse_row => mouse_row,
+        mouse_col => mouse_col,
+        red_out => r_screen,
+        green_out => g_screen,
+        blue_out => b_screen
+    );
 
   -- Connect the mux outputs to the VGA outputs
   --red_in <= r_mux(3) or ball_r or 
-  red_in <= bg_r; -- Combine text, ball, and background red signals
+  red_in <= bg_r or r_screen or cursor_r; -- Combine text, ball, and background red signals
   --green_in <= g_mux(3) or ball_g or 
-  green_in <= bg_g; -- Combine text, ball, and background green signals
+  green_in <= bg_g or g_screen or cursor_g; -- Combine text, ball, and background green signals
   --blue_in <= b_mux(3) or ball_b or 
-  blue_in <= bg_b; -- Combine text, ball, and background blue signals
+  blue_in <= bg_b or b_screen or cursor_b; -- Combine text, ball, and background blue signals
 
   VGA_R <= red_sig;
 VGA_G <= green_sig;

@@ -27,7 +27,7 @@ ARCHITECTURE a OF START_SCREEN IS
 
 
   SIGNAL r_subtitle, g_subtitle, b_subtitle : std_logic_vector(3 downto 0);
-  SIGNAL msg_subtitle : text_string(1 to 29) := "Select mode with Dip Switches";
+  SIGNAL msg_subtitle : text_string(1 to 29) := "SELECT MODE WITH DIP SWITCHES";
 
   -- Signals for mode selection text
     SIGNAL r_tm, g_tm, b_tm : std_logic_vector(3 downto 0);
@@ -192,8 +192,8 @@ VGA_TEXT_TM : entity work.VGA_TEXT
     tm_box_g <= "1111" when tm_box = '1' else "0000";
     tm_box_b <= "1111" when tm_box = '1' else "0000";
     tm_box_fill_r <= "1111" when tm_box_on = '1' else "0000";
-    tm_box_fill_g <= "0101" when tm_box_on = '1' else "0000";
-    tm_box_fill_b <= "0111" when tm_box_on = '1' else "0000";
+    tm_box_fill_g <= "0110" when tm_box_on = '1' else "0000";
+    tm_box_fill_b <= "0000" when tm_box_on = '1' else "0000";
 
     -- Border box for single player mode
     sp_box <= '1' when(
@@ -219,8 +219,8 @@ VGA_TEXT_TM : entity work.VGA_TEXT
     sp_box_g <= "1111" when sp_box = '1' else "0000";
     sp_box_b <= "1111" when sp_box = '1' else "0000";
     sp_box_fill_r <= "1111" when sp_box_on = '1' else "0000";
-    sp_box_fill_g <= "0101" when sp_box_on = '1' else "0000";
-    sp_box_fill_b <= "0111" when sp_box_on = '1' else "0000";
+    sp_box_fill_g <= "0110" when sp_box_on = '1' else "0000";
+    sp_box_fill_b <= "0000" when sp_box_on = '1' else "0000";
 
 
 
@@ -273,15 +273,14 @@ VGA_TEXT_TM : entity work.VGA_TEXT
     start_box_g <= "1111" when start_box_border = '1' else "0000";
     start_box_b <= "1111" when start_box_border = '1' else "0000";
     start_box_fill_r <= "1111" when start_box_fill = '1' else "0000";
-    start_box_fill_g <= "0101" when start_box_fill = '1' else "0000";
-    start_box_fill_b <= "0111" when start_box_fill = '1' else "0000";
+    start_box_fill_g <= "0110" when start_box_fill = '1' else "0000";
+    start_box_fill_b <= "0000" when start_box_fill = '1' else "0000";
     start_box_shadow_r <= "0100" when start_box_shadow = '1' else "0000";
     start_box_shadow_g <= "0000" when start_box_shadow = '1' else "0000";
     start_box_shadow_b <= "0100" when start_box_shadow = '1' else "0000";
-    start_box_hover_r <= "1111" when start_box_hovered = '1' else "0000";
-    start_box_hover_g <= "1111" when start_box_hovered = '1' else "0000";
-    start_box_hover_b <= "0000" when start_box_hovered = '1' else "0000";
-
+    start_box_hover_r <= "1111" when (start_box_hovered = '1' and row_int >= 370 and row_int <= 416 and col_int >= 158 and col_int <= 482) else "0000";
+    start_box_hover_g <= "1111" when (start_box_hovered = '1' and row_int >= 370 and row_int <= 416 and col_int >= 158 and col_int <= 482) else "0000";
+    start_box_hover_b <= "0000" when (start_box_hovered = '1' and row_int >= 370 and row_int <= 416 and col_int >= 158 and col_int <= 482) else "0000";
 
 
 
