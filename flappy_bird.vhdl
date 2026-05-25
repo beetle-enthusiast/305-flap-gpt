@@ -30,7 +30,6 @@ architecture hw_interface of flappy_bird is
   -- Internal signals for VGA
   signal pixel_row, pixel_column : std_logic_vector(9 downto 0);
   signal red_in, green_in, blue_in : std_logic_vector(3 downto 0);
-  signal hs, vs : std_logic;
 
   component pll_25mhz is
     port (
@@ -48,7 +47,7 @@ begin
       refclk => CLOCK_50,
       rst => hard_reset,
       outclk_0 => CLOCK_25
-    );
+  );
 
   MOUSE_PS2 : entity work.mouse
     port map (
