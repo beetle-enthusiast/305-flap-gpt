@@ -6,7 +6,8 @@ use work.text_pkg.all;
 
 entity flappy_bird is
   port (
-    PLAY, RESTART, CLOCK_50  : in  std_logic;
+    CLOCK_50  : in  std_logic;
+    SW        : in  std_logic_vector(9 downto 0);
     LEDR      : out std_logic_vector(9 downto 0);
     HEX3, HEX2, HEX1, HEX0  : out std_logic_vector(6 downto 0);
     PS2_CLK, PS2_DAT  : inout std_logic;

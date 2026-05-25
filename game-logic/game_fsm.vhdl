@@ -1,0 +1,102 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library work;
+use work.custom_types.vhdl;
+
+--  Control inputs
+--    PLAY: Selects options and play/pauses the active game
+--    RESTART:  Quits game and goes to start menu without displaying score
+--    MODE: 2-state switch which selects the game mode of the new game
+
+--  Control signals
+--    state:  Current game state (START_MENU, PLAY_GAME, PAUSE_GAME, GAME_OVER)
+--    game_mode:  Game mode of active game
+--    reset:  Resets all stored game data / components
+--    pause:  Pause menu is displayed and game logic is halted
+
+--  Status signals
+--    player_dead:  Signals that the active game is over
+
+entity game_fsm is
+  port (
+    clk : in  std_logic;  -- 25MHz Clock
+
+    -- Control inputs
+    PLAY, RESTART : in  std_logic; -- Active HIGH (must invert button inputs)
+    MODE          : in  std_logic;
+
+    -- Control signals
+    state             : out game_state;
+    game_mode, pause  : out std_logic;
+
+    -- Status signals
+    player_dead : in  std_logic;
+  );
+end game_fsm;
+
+architecture shmoovement of game_fsm is
+
+  signal current_state  : game_state  := START; -- Initialised at start menu
+
+  variable play_pressed, restart_pressed  : std_logic := '0';
+
+begin
+
+  fsm : process(clk, PLAY, RESTART)
+  begin
+    if rising_edge(PLAY) then
+      play_pressed <= '1';
+    end if;
+
+    if rising_edge(RESTART) then
+      current_state <= START_MENU;
+    end if;
+
+
+    if rising_edge(clk) then
+      case current_state is
+
+        when START_MENU => 
+          if (play_pressed = '1') then
+            play_pressed := '0';
+
+            -- Start game
+            current_state <= PLAY_GAME;
+            game_mode <= MODE;
+          end if;
+          
+        when PLAY_GAME => 
+          if (player_dead = '1') then
+            -- Game is over
+            current_state <= GAME_OVER;
+          elsif (play_pressed = '1') then
+            play_pressed := '0';
+            
+            -- Pause game
+            current_state <= PAUSE_GAME;
+          end if;
+          
+        when PAUSE_GAME => 
+          if (play_pressed = '1') then
+            play_pressed := '0';
+
+            -- Resume game
+            current_state <= PLAY_GAME;
+          end if;
+      
+        when others => 
+          null;
+      
+      end case;
+
+    end if;
+  end process;
+
+  state <= current_state;
+
+  pause <=  '1' when (current_state = PAUSE_GAME) or (current_state = GAME_OVER)
+            else '0';
+
+end architecture;
