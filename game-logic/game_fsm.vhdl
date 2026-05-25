@@ -28,8 +28,9 @@ entity game_fsm is
     MODE          : in  std_logic;
 
     -- Control signals
-    state             : out game_state;
-    game_mode, pause  : out std_logic;
+    state         : out game_state;
+    game_mode     : out std_logic;
+    reset, pause  : out std_logic;
 
     -- Status signals
     player_dead : in  std_logic;
@@ -46,25 +47,16 @@ begin
 
   fsm : process(clk, PLAY, RESTART)
   begin
-    if rising_edge(PLAY) then
-      play_pressed <= '1';
-    end if;
-
-    if rising_edge(RESTART) then
-      current_state <= START_MENU;
-    end if;
-
-
+  
     if rising_edge(clk) then
       case current_state is
 
         when START_MENU => 
           if (play_pressed = '1') then
             play_pressed := '0';
-
             -- Start game
             current_state <= PLAY_GAME;
-            game_mode <= MODE;
+            game_mode <= MODE; -- Mealy machine YAY
           end if;
           
         when PLAY_GAME => 
@@ -73,7 +65,6 @@ begin
             current_state <= GAME_OVER;
           elsif (play_pressed = '1') then
             play_pressed := '0';
-            
             -- Pause game
             current_state <= PAUSE_GAME;
           end if;
@@ -81,21 +72,40 @@ begin
         when PAUSE_GAME => 
           if (play_pressed = '1') then
             play_pressed := '0';
-
             -- Resume game
             current_state <= PLAY_GAME;
+          end if;
+
+        when GAME_OVER => 
+          if (play_pressed = '1') then
+            play_pressed := '0';
+            -- Press any button to go to start menu (but not actually)
+            current_state <= START_MENU;
           end if;
       
         when others => 
           null;
       
       end case;
-
     end if;
+
+    if rising_edge(PLAY) then
+      -- If some states do not have a play button input, 
+      -- play_pressed should not be set HIGH in those states
+      -- Alternatively continuously set pray_pressed LOW
+      play_pressed <= '1';
+    end if;
+
+    if rising_edge(RESTART) then
+      current_state <= START_MENU;
+    end if;
+
   end process;
 
   state <= current_state;
 
+  reset <=  '1' when (current_state = START_MENU)
+            else '0';
   pause <=  '1' when (current_state = PAUSE_GAME) or (current_state = GAME_OVER)
             else '0';
 
