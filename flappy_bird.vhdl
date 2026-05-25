@@ -37,6 +37,8 @@ architecture hw_interface of flappy_bird is
   SIGNAL row_int, col_int : integer;
   SIGNAL mouse_row_int, mouse_col_int : integer;
 
+  SIGNAL gameplay_video_on : std_logic;
+
   component pll_25mhz is
     port (
       refclk   : in  std_logic; --  refclk.clk
@@ -154,18 +156,69 @@ begin
         mouse_click  => left_click,
         mouse_row => mouse_row,
         mouse_col => mouse_col,
+        video_on => gameplay_video_on,
         red_out => r_screen,
         green_out => g_screen,
         blue_out => b_screen
     );
 
+
+    -- VGA_GAMEPLAY_screen : entity work.gameplay_screen
+    -- port map (
+    --     pixel_row => pixel_row,
+    --     pixel_column => pixel_column,
+    --     clock_25Mhz => CLOCK_25,
+    --     score => 10, -- Placeholder score value
+    --     level => 3, -- Placeholder level value
+    --     lives => 3, -- Placeholder lives value MAX 3 
+    --     red_out => r_screen,
+    --     green_out => g_screen,
+    --     blue_out => b_screen,
+    --     video_on => gameplay_video_on
+    -- );
+
+    -- -- VGA_Game over screen
+    -- VGA_GAMEOVER_screen : entity work.gameover_screen
+    -- port map (
+    --     pixel_row => pixel_row,
+    --     pixel_column => pixel_column,
+    --     clock_25Mhz => CLOCK_25,
+    --     score => 10, -- Placeholder score value
+    --     is_high_score => '1', -- Placeholder high score flag
+    --     red_out => r_screen,
+    --     green_out => g_screen,
+    --     blue_out => b_screen,
+    --     video_on => gameplay_video_on
+    -- );
+
+    -- -- VGA_PAUSE_screen : entity work.pause_screen
+    -- VGA_PAUSE_screen : entity work.pause_screen
+    -- port map (
+    --     pixel_row => pixel_row,
+    --     pixel_column => pixel_column,
+    --     clock_25Mhz => CLOCK_25,
+    --     score => 10, -- Placeholder score value
+    --     level => 3, -- Placeholder level value
+    --     lives => 3, -- Placeholder lives value MAX 3 
+    --     red_out => r_screen,
+    --     green_out => g_screen,
+    --     blue_out => b_screen,
+    --     video_on => gameplay_video_on
+    -- );
+
+      
+
   -- Connect the mux outputs to the VGA outputs
-  --red_in <= r_mux(3) or ball_r or 
-  red_in <= bg_r or r_screen or cursor_r; -- Combine text, ball, and background red signals
-  --green_in <= g_mux(3) or ball_g or 
-  green_in <= bg_g or g_screen or cursor_g; -- Combine text, ball, and background green signals
-  --blue_in <= b_mux(3) or ball_b or 
-  blue_in <= bg_b or b_screen or cursor_b; -- Combine text, ball, and background blue signals
+  red_in   <= cursor_r when cursor_on = '1' else
+            r_screen when gameplay_video_on = '1' else
+            bg_r;
+green_in <= cursor_g when cursor_on = '1' else
+            g_screen when gameplay_video_on = '1' else
+            bg_g;
+blue_in  <= cursor_b when cursor_on = '1' else
+            b_screen when gameplay_video_on = '1' else
+            bg_b;
+
 
   VGA_R <= red_sig;
 VGA_G <= green_sig;

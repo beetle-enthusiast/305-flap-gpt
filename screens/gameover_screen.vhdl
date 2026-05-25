@@ -12,6 +12,7 @@ ENTITY GAMEOVER_SCREEN IS
         clock_25Mhz : IN STD_LOGIC;
         score : IN INTEGER;
         is_high_score : IN STD_LOGIC;
+        video_on : OUT STD_LOGIC;
         red_out, green_out, blue_out : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
     );
 END GAMEOVER_SCREEN;
@@ -33,7 +34,15 @@ SIGNAL box_on : std_logic;
 SIGNAL box_r, box_g, box_b : std_logic_vector(3 downto 0);
 
 
- 
+signal r_gameover_gated, g_gameover_gated, b_gameover_gated : std_logic_vector(3 downto 0);
+signal r_highscore_gated, g_highscore_gated, b_highscore_gated : std_logic_vector(3 downto 0);
+signal r_growths_gated, g_growths_gated, b_growths_gated : std_logic_vector(3 downto 0);
+
+
+-- Add button to restart game
+-- 2 options - play again or go to menu screen
+
+--TODO : ADD BUTTON TO GO MENU OR PLAY AGAIN
   
 
 begin
@@ -131,24 +140,30 @@ begin
     );
     
    
+r_gameover_gated <= r_gameover ;
+g_gameover_gated <= g_gameover ;
+b_gameover_gated <= b_gameover ;
 
-   red_out <= (r_gameover when is_high_score = '0' else "0000") or
-           (r_highscore when is_high_score = '1' else "0000") or
-           (r_growths when is_high_score = '1' else "0000") or
-           r_score or
-           box_r;
-    green_out <= (g_gameover when is_high_score = '0' else "0000") or
-             (g_highscore when is_high_score = '1' else "0000") or
-             (g_growths when is_high_score = '1' else "0000") or
-             g_score or
-             box_g;
-    blue_out <= (b_gameover when is_high_score = '0' else "0000") or
-            (b_highscore when is_high_score = '1' else "0000") or
-            (b_growths when is_high_score = '1' else "0000") or
-            b_score or
-            box_b;
+r_highscore_gated <= r_highscore when is_high_score = '1' else "0000";
+g_highscore_gated <= g_highscore when is_high_score = '1' else "0000";
+b_highscore_gated <= b_highscore when is_high_score = '1' else "0000";
+
+r_growths_gated <= r_growths when is_high_score = '1' else "0000";
+g_growths_gated <= g_growths when is_high_score = '1' else "0000";
+b_growths_gated <= b_growths when is_high_score = '1' else "0000";
+    
+red_out <= r_gameover_gated or r_highscore_gated or r_growths_gated or r_score or box_r;
+green_out <= g_gameover_gated or g_highscore_gated or g_growths_gated or g_score or box_g;
+blue_out <= b_gameover_gated or b_highscore_gated or b_growths_gated or b_score or box_b;
 
 
+video_on <= '1' when (
+    box_on = '1' or
+    r_gameover_gated /= "0000" or
+    r_highscore_gated /= "0000" or
+    r_growths_gated /= "0000" or
+    r_score /= "0000"
+) else '0';
 END a;
 
 

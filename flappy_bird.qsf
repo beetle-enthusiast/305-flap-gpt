@@ -474,6 +474,10 @@ set_location_assignment PIN_U7 -to push_button_1
 set_location_assignment PIN_W9 -to push_button_2
 set_global_assignment -name VHDL_FILE flappy_bird.vhdl
 set_global_assignment -name VHDL_FILE "vga-display/vga_sync.vhd"
+set_global_assignment -name VHDL_FILE sprites/heart.vhdl
+set_global_assignment -name VHDL_FILE screens/pause_screen.vhdl
+set_global_assignment -name VHDL_FILE screens/gameplay_screen.vhdl
+set_global_assignment -name VHDL_FILE screens/gameover_screen.vhdl
 set_global_assignment -name VHDL_FILE screens/start_screen.vhdl
 set_global_assignment -name VHDL_FILE vga_background.vhdl
 set_global_assignment -name VHDL_FILE "vga-display/bouncy_ball.vhd"
@@ -487,4 +491,5 @@ set_global_assignment -name QIP_FILE pll_25mhz.qip
 set_global_assignment -name SIP_FILE pll_25mhz.sip
 set_global_assignment -name MIF_FILE mif/background_160x120_rgb12.mif
 set_global_assignment -name QIP_FILE background_rom.qip
+set_global_assignment -name SOURCE_FILE db/flappy_bird.cmp.rdb
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

@@ -13,6 +13,7 @@ ENTITY START_SCREEN IS
         mode : IN STD_LOGIC;
         mouse_click : IN STD_LOGIC;
         mouse_row, mouse_col : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
+        video_on : OUT STD_LOGIC;
         red_out, green_out, blue_out : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
 
     );
@@ -59,7 +60,6 @@ ARCHITECTURE a OF START_SCREEN IS
     SIGNAL start_box_hover_r, start_box_hover_g, start_box_hover_b : std_logic_vector(3 downto 0);
 
    
-
 
   
   
@@ -290,6 +290,23 @@ VGA_TEXT_TM : entity work.VGA_TEXT
     blue_out <= b_title or b_subtitle or b_tm or b_sp or b_Sbutton or tm_box_b or tm_box_fill_b or sp_box_b or sp_box_fill_b or start_box_b or start_box_fill_b or start_box_shadow_b or start_box_hover_b;
 
 
+
+    
+    video_on <= '1' when (
+    r_title /= "0000" or
+    r_subtitle /= "0000" or
+    r_tm /= "0000" or
+    r_sp /= "0000" or
+    r_Sbutton /= "0000" or
+    tm_box = '1' or
+    tm_box_on = '1' or
+    sp_box = '1' or
+    sp_box_on = '1' or
+    start_box_border = '1' or
+    start_box_fill = '1' or
+    start_box_shadow = '1' or
+    start_box_hovered = '1'
+) else '0';
 
 END a;
 
