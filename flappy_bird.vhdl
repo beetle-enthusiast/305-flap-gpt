@@ -2,12 +2,13 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library work;
+use work.custom_types.all;
 use work.text_pkg.all;
 
 entity flappy_bird is
   port (
     CLOCK_50  : in  std_logic;
-    SW        : in  std_logic_vector(9 downto 0);
     LEDR      : out std_logic_vector(9 downto 0);
     HEX3, HEX2, HEX1, HEX0  : out std_logic_vector(6 downto 0);
     PS2_CLK, PS2_DAT  : inout std_logic;
@@ -23,14 +24,23 @@ end flappy_bird;
 
 architecture hw_interface of flappy_bird is
 
-  signal CLOCK_25                 : std_logic;
+  signal CLOCK_25       : std_logic;
+  signal PLAY, RESTART  : std_logic;
+  signal MODE           : std_logic;
+
+  signal state          : game_state;
+  signal game_mode      : std_logic;
+  signal game_reset, game_pause   : std_logic;
+  signal player_dead    : std_logic;
+
+
   signal mouse_data, mouse_clk    : std_logic;
   signal left_click, right_click  : std_logic;
   signal mouse_row, mouse_col     : std_logic_vector(9 downto 0);
 
   -- Internal signals for VGA
-  signal pixel_row, pixel_column : std_logic_vector(9 downto 0);
-  signal red_in, green_in, blue_in : std_logic_vector(3 downto 0);
+  signal pixel_row, pixel_column    : std_logic_vector(9 downto 0);
+  signal red_in, green_in, blue_in  : std_logic_vector(3 downto 0);
 
   component pll_25mhz is
     port (
@@ -46,14 +56,14 @@ begin
   CLK_DIV_2 : pll_25mhz
     port map (
       refclk => CLOCK_50,
-      rst => hard_reset,
+      rst => '0',
       outclk_0 => CLOCK_25
   );
 
   MOUSE_PS2 : entity work.mouse
     port map (
       clock_25mhz => CLOCK_25,
-      reset => hard_reset,
+      reset => '0',
       mouse_data => PS2_DAT,
       mouse_clk => PS2_CLK,
       left_button => left_click,
@@ -79,5 +89,17 @@ begin
     pixel_row => pixel_row,
     pixel_column => pixel_column
   );
+
+  STATUS_FSM  : entity work.game_fsm
+    port map (
+    clk => CLOCK_25,
+    PLAY => PLAY,
+    RESTART => RESTART,
+    state => state,
+    game_mode => game_mode,
+    reset => game_reset,
+    pause => game_pause
+  );
+
   
   end architecture;

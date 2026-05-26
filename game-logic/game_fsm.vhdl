@@ -33,7 +33,7 @@ entity game_fsm is
     reset, pause  : out std_logic;
 
     -- Status signals
-    player_dead : in  std_logic
+    player_dead   : in  std_logic
   );
 end game_fsm;
 
