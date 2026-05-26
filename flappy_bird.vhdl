@@ -32,6 +32,8 @@ architecture hw_interface of flappy_bird is
   signal left_click, right_click  : std_logic;
   signal mouse_row, mouse_col     : std_logic_vector(9 downto 0);
 
+  signal start_clicked_sig : std_logic; --  SIGNAL CONNECTS TO THE FSM PLAY BUTTON
+
   SIGNAL cursor_r, cursor_g, cursor_b : std_logic_vector(3 downto 0);
   SIGNAL cursor_on : std_logic;
   SIGNAL row_int, col_int : integer;
@@ -156,6 +158,7 @@ begin
         mouse_click  => left_click,
         mouse_row => mouse_row,
         mouse_col => mouse_col,
+        start_clicked => start_clicked_sig,
         video_on => gameplay_video_on,
         red_out => r_screen,
         green_out => g_screen,

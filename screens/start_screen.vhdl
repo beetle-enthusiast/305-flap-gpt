@@ -14,6 +14,7 @@ ENTITY START_SCREEN IS
         mouse_click : IN STD_LOGIC;
         mouse_row, mouse_col : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
         video_on : OUT STD_LOGIC;
+        start_clicked : OUT STD_LOGIC;
         red_out, green_out, blue_out : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
 
     );
@@ -267,6 +268,8 @@ VGA_TEXT_TM : entity work.VGA_TEXT
         ( row_int >= 417 and col_int >= 483 and row_int <= 423 and col_int <= 486) and start_box_clicked = '0' 
     )
     else '0';
+
+    start_clicked <= '1' when start_box_clicked = '1' else '0';
 
 
     start_box_r <= "1111" when start_box_border = '1' else "0000";
