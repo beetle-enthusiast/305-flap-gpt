@@ -60,21 +60,22 @@ architecture hw_interface of flappy_bird is
   signal r_mux, g_mux, b_mux : std_logic_vector(3 downto 0);
   
   --Signals for ball
-  signal ball_r, ball_g, ball_b : std_logic;
+  signal ball_on, ball_r, ball_g, ball_b : std_logic;
+  signal ball_enable: std_logic:= '1';
+  SIGNAL collision				: std_logic:= '0';
+
   
   --Signals for pipe
   signal pipe_r, pipe_g, pipe_b, 
 		   pipe2_start, pipe3_start, 
 		   pipe_on, pipe1_on, pipe2_on, pipe3_on, 
          pipe_enable, pipe1_enable, pipe2_enable, pipe3_enable: std_logic;
+  signal pipe_start: std_logic := '1';
   signal pipe1_x_pos, pipe2_x_pos, pipe3_x_pos: std_logic_vector(10 downto 0);
   signal pipe1_y_pos, pipe2_y_pos, pipe3_y_pos: std_logic_vector(9 downto 0);
   
   --Signals for lfsr
   signal randomiser_value : std_logic_vector (7 downto 0);
-  
-  
-
 
 
 begin
@@ -101,9 +102,11 @@ begin
     --For ball movement
     -- Instantiate BOUNCY_BALL component
     BOUNCY_BALL_COMPONENT: entity work.bouncy_ball
-    PORT MAP (	click => left_click, pb1 => push_button_1, pb2 => push_button_2, clk => CLOCK_25, vert_sync => vs,
+    PORT MAP (	enable=> ball_enable, click => left_click, pb1 => push_button_1, pb2 => push_button_2, clk => CLOCK_25, vert_sync => vs,
           pixel_row => pixel_row, pixel_column => pixel_column,
-          red => ball_r, green => ball_g, blue => ball_b);
+          ball_on_out => ball_on, 
+			 red => ball_r, green => ball_g, blue => ball_b,
+			 collision => collision);
     
     --LFSR for random pipe gap position
     LFSR_COMPONENT: entity work.lfsr
@@ -112,7 +115,8 @@ begin
     -- For pipe movement
     -- Instantiate PIPE component
     PIPE1_COMPONENT: entity work.pipe
-    PORT MAP (vert_sync => vs, 
+    PORT MAP (enable => pipe_start, 
+				  vert_sync => vs, 
 				  start=> '1', 
 				  pixel_row => pixel_row, 
 				  pixel_column => pixel_column,
@@ -123,7 +127,8 @@ begin
 				  pipe_enable => pipe1_enable);
 				  
 	PIPE2_COMPONENT: entity work.pipe
-    PORT MAP (vert_sync => vs, 
+    PORT MAP (enable => pipe_start,
+				  vert_sync => vs, 
 				  start=> pipe2_start, 
 				  pixel_row => pixel_row, 
 				  pixel_column => pixel_column,
@@ -134,7 +139,8 @@ begin
 				  pipe_enable => pipe2_enable);
 				  
 	PIPE3_COMPONENT: entity work.pipe
-    PORT MAP (vert_sync => vs, 
+    PORT MAP (enable => pipe_start,
+				  vert_sync => vs, 
 				  start=> pipe3_start, 
 				  pixel_row => pixel_row, 
 				  pixel_column => pixel_column,
@@ -212,6 +218,16 @@ begin
   
   pipe_enable <= pipe1_enable or pipe2_enable or pipe3_enable;
   
+  -- Collision logic
+  pipe_start <= '0' when collision = '1'
+						  else 
+					 '1';
+
+  ball_enable <= '0' when collision = '1'
+						  else 
+					 '1';
+					 
+  
 
   -- Scale from switchs
   scale_val <= to_integer(unsigned(SW(1 downto 0))) + 1; -- Scale factor from 1 to 4 based on the value of the first two switches
@@ -222,9 +238,9 @@ begin
   b_mux <= b_press when push_button_1 = '0' else b_start;
 
   -- Connect the mux outputs to the VGA outputs
-  red_in   <= '0' when pipe_on = '1' else r_mux(3) or ball_r;
-  green_in <= '1' when pipe_on = '1' else g_mux(3) or ball_g or '1';
-  blue_in  <= '0' when pipe_on = '1' else b_mux(3) or ball_b or '1';
+ red_in   <= '0' when pipe_on = '1' else ball_r when ball_on = '1' else r_mux(3);
+ green_in <= '1' when pipe_on = '1' else ball_g when ball_on = '1' else g_mux(3) or '1';
+ blue_in  <= '0' when pipe_on = '1' else ball_b when ball_on = '1' else b_mux(3) or '1';
 
   VGA_R <= (others => red_sig);
   VGA_G <= (others => green_sig);

@@ -7,7 +7,7 @@ use ieee.numeric_std.all;
 
 ENTITY pipe IS
 	PORT
-		(start, vert_sync	: IN std_logic;
+		(enable, start, vert_sync	: IN std_logic;
         pixel_row, pixel_column	: IN std_logic_vector(9 DOWNTO 0);
           randomiser_value: IN std_logic_vector(7 DOWNTO 0);
 		  pipe_x_pos: OUT std_logic_vector(10 DOWNTO 0);
@@ -55,7 +55,7 @@ VARIABLE end_pos: std_logic_vector (10 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(0, 11);
 
 begin
 	-- Move ball once every vertical sync
-	if (rising_edge(vert_sync)) then
+	if (rising_edge(vert_sync) and (enable = '1')) then
 	
 			-- So that pipes still move after they have been started
 		  if (start = '1') then
