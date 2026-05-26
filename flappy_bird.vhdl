@@ -14,6 +14,7 @@ entity flappy_bird is
     PS2_CLK, PS2_DAT  : inout std_logic;
    
     SW : in std_logic_vector(9 downto 0);
+    KEY : in  std_logic_vector(9 downto 0);
     VGA_R : out std_logic_vector(3 downto 0);
     VGA_G : out std_logic_vector(3 downto 0);
     VGA_B : out std_logic_vector(3 downto 0);
@@ -40,14 +41,19 @@ architecture hw_interface of flappy_bird is
 
   -- Internal signals for VGA
   signal pixel_row, pixel_column    : std_logic_vector(9 downto 0);
-  signal red_in, green_in, blue_in  : std_logic_vector(3 downto 0);
+  signal red_in, green_in, blue_in : std_logic_vector(3 downto 0);
+  signal red_sig, green_sig, blue_sig : std_logic_vector(3 downto 0);
+  signal hs, vs : std_logic;
+
+  -- signals for background
+
+  signal bg_r, bg_g, bg_b : std_logic_vector(3 downto 0);
 
   component pll_25mhz is
     port (
       refclk   : in  std_logic; --  refclk.clk
       rst      : in  std_logic; --  reset.reset
-      outclk_0 : out std_logic; --  outclk0.clk
-      locked   : out std_logic  --  locked.export
+      outclk_0 : out std_logic --  outclk0.clk
     );
   end component;
 
@@ -81,25 +87,53 @@ begin
     blue => blue_in, -- Use the most significant bit of text_b for the blue signal
     
     -- Assuming c_out signals have been changed to 4 bit
-    red_out => VGA_R,
-    green_out => VGA_G,
-    blue_out => VGA_B,
-    horiz_sync_out => VGA_HS,
-    vert_sync_out => VGA_VS,
+    red_out => red_sig,
+    green_out => green_sig,
+    blue_out => blue_sig,
+    horiz_sync_out => hs,
+    vert_sync_out => vs,
     pixel_row => pixel_row,
     pixel_column => pixel_column
   );
 
+  VGA_BACKGROUND_inst : entity work.VGA_BACKGROUND
+    port map (
+        pixel_row => pixel_row,
+        pixel_column => pixel_column,
+        clock_25Mhz => CLOCK_25,
+        red_out => bg_r,
+        green_out => bg_g,
+        blue_out => bg_b
+    );
+
   STATUS_FSM  : entity work.game_fsm
     port map (
-    clk => CLOCK_25,
-    PLAY => PLAY,
-    RESTART => RESTART,
-    state => state,
-    game_mode => game_mode,
-    reset => game_reset,
-    pause => game_pause
+      clk => CLOCK_25,
+      PLAY => PLAY,
+      RESTART => RESTART,
+      MODE => MODE,
+      state => state,
+      game_mode => game_mode,
+      reset => game_reset,
+      pause => game_pause,
+      player_dead => player_dead
   );
 
+
+  red_in <= bg_r;
+  green_in <= bg_g;
+  blue_in <= bg_b;
+
+  VGA_R <= red_sig;
+  VGA_G <= green_sig;
+  VGA_B <= blue_sig;
+
+  VGA_HS <= hs;
+  VGA_VS <= vs;
+  
+  
+  PLAY <= not KEY(1);
+  RESTART <= not KEY(0);
+  MODE <= SW(0);
   
   end architecture;
