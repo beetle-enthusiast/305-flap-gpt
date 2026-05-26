@@ -14,7 +14,7 @@ entity flappy_bird is
     PS2_CLK, PS2_DAT  : inout std_logic;
    
     SW : in std_logic_vector(9 downto 0);
-    KEY : in  std_logic_vector(9 downto 0);
+    KEY : in  std_logic_vector(3 downto 0);
     VGA_R : out std_logic_vector(3 downto 0);
     VGA_G : out std_logic_vector(3 downto 0);
     VGA_B : out std_logic_vector(3 downto 0);
@@ -24,6 +24,9 @@ entity flappy_bird is
 end flappy_bird;
 
 architecture hw_interface of flappy_bird is
+
+  -- TEMPORARY: DELETE ONCE DDONE
+  -- signal CLOCK_50 : std_logic;
 
   signal CLOCK_25       : std_logic;
   signal PLAY, RESTART  : std_logic;
@@ -104,7 +107,7 @@ begin
         red_out => bg_r,
         green_out => bg_g,
         blue_out => bg_b
-    );
+  );
 
   STATUS_FSM  : entity work.game_fsm
     port map (
@@ -120,10 +123,12 @@ begin
   );
 
 
+  -- VGA background assignment
   red_in <= bg_r;
   green_in <= bg_g;
   blue_in <= bg_b;
 
+  -- VGA driver assignment
   VGA_R <= red_sig;
   VGA_G <= green_sig;
   VGA_B <= blue_sig;
@@ -132,8 +137,15 @@ begin
   VGA_VS <= vs;
   
   
-  PLAY <= not KEY(1);
-  RESTART <= not KEY(0);
+  -- Button/Switch controls
+  PLAY <= not KEY(0);
+  RESTART <= not KEY(1);
   MODE <= SW(0);
-  
+
+  -- For testing
+  LEDR(1) <=  '1' when game_pause = '1'
+              else '0';
+  LEDR(0) <=  '1' when game_reset = '1'
+              else '0';
+
   end architecture;

@@ -40,14 +40,17 @@ end game_fsm;
 architecture shmoovement of game_fsm is
 
   signal current_state  : game_state  := START_MENU; -- Initialised at start menu
+  signal play_prev, restart_prev  : std_logic := '0';
 
 begin
 
   fsm : process(clk, PLAY, RESTART)
     variable play_pressed             : std_logic := '0';
-    variable play_prev, restart_prev  : std_logic := '0';
   begin
     if rising_edge(clk) then
+
+      play_prev <= PLAY;
+      restart_prev <= RESTART;
 
       -- Check if play button is pressed
       if (PLAY = '1') and (play_prev = '0') then
@@ -55,18 +58,11 @@ begin
         -- play_pressed should not be set HIGH in those states
         -- Alternatively continuously set pray_pressed LOW
         play_pressed := '1';
-        play_prev := '1';
-      else
-        play_pressed := '0';
-        play_prev := PLAY;
       end if;
 
       -- Check if restart button is pressed
       if (RESTART = '1') and (restart_prev = '0') then
-        restart_prev := '1';
         current_state <= START_MENU;
-      else
-        restart_prev := RESTART;
       end if;
 
       -- FSM state logic
@@ -82,6 +78,7 @@ begin
           
         when PLAY_GAME => 
           if (player_dead = '1') then
+            play_pressed := '0';
             -- Game is over
             current_state <= GAME_OVER;
           elsif (play_pressed = '1') then
