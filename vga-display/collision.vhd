@@ -5,110 +5,43 @@ USE  IEEE.STD_LOGIC_SIGNED.all;
 use ieee.numeric_std.all;
 
 
-ENTITY bouncy_ball IS
+ENTITY collision IS
 	PORT
-		( enable, click, pb1, pb2, clk, vert_sync	: IN std_logic;
-          pixel_row, pixel_column	: IN std_logic_vector(9 DOWNTO 0);
-		  ball_on_out, red, green, blue, collision: OUT std_logic);		
-END bouncy_ball;
+		( vert_sync	: IN std_logic;
+          ball_y_pos, ball_size	: IN std_logic_vector(9 DOWNTO 0);
+		  collision: OUT std_logic);		
+END collision;
 
-architecture behavior of bouncy_ball is
+architecture behavior of collision is
 
-SIGNAL ball_on, ball_white: std_logic;
-SIGNAL prev_click, ball_collision, collision_temp : std_logic := '0';
-SIGNAL size 					: std_logic_vector(9 DOWNTO 0);  
-SIGNAL ball_y_pos				: std_logic_vector(9 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(479 - 8, 10);
-SIGNAL ball_x_pos				: std_logic_vector(10 DOWNTO 0);
-
+SIGNAL collision_temp : std_logic := '0';
 
 BEGIN           
 
-size <= CONV_STD_LOGIC_VECTOR(8,10); -- ball radius is 8 pixels
-
--- ball_x_pos and ball_y_pos show the (x,y) for the centre of ball
-ball_x_pos <= CONV_STD_LOGIC_VECTOR(400,11);
-
--- Determine the pixels where the ball should be drawn 
-ball_on <= '1' when ( ('0' & ball_x_pos <= '0' & pixel_column + size) 
-							and ('0' & pixel_column <= '0' & ball_x_pos + size) 	-- x_pos - size <= pixel_column <= x_pos + size
-							and ('0' & ball_y_pos <= pixel_row + size) 
-							and ('0' & pixel_row <= ball_y_pos + size) )  
-					else	-- y_pos - size <= pixel_row <= y_pos + size
-				'0';
-				
--- Colours for pixel data on video signal
-
-Red   <= ball_on and ball_collision;
-Green <= ball_on and ball_collision;
-Blue  <= ball_on and ball_collision;
-
-ball_on_out <= ball_on;
-
-Move_Ball: process (vert_sync) 
-VARIABLE ball_y_motion			: std_logic_vector(9 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(0, 10); 	
-VARIABLE at_top: std_logic:= '0';
-
+Check_Collision: process (vert_sync) 
 begin
 	-- Move ball once every vertical sync
-	if (rising_edge(vert_sync) and (enable = '1')) then
-	
-			
+	if (rising_edge(vert_sync)) then
+
 		-- Bounce off top or bottom of the screen
-		if ( ('0' & ball_y_pos >= CONV_STD_LOGIC_VECTOR(479,10) - size) ) then
+		if ( ('0' & ball_y_pos >= CONV_STD_LOGIC_VECTOR(479,10) - ball_size) ) then
 		   -- We have hit the bottom => stay still (move zero pixels)
-			ball_y_motion := CONV_STD_LOGIC_VECTOR(0,10);
-			at_top := '0';
+            collision_temp <= '0';
 			
-		elsif (ball_y_pos <= size) then 
-		   -- We have hit the top => move to bottom of screen
-			at_top:= '1';
-			-- Alternate ball colour
-			ball_collision <= not ball_collision;
-			
-			--Implement gravity every frame
-			ball_y_motion := ball_y_motion + CONV_STD_LOGIC_VECTOR(1,10);
-			
+		elsif (ball_y_pos <= ball_size) then 
+		   -- We have hit the top
 			--Collision
 			collision_temp <= '1';
 		
 			
 		else
-			at_top := '0';
-			--Implement gravity every frame
-			ball_y_motion := ball_y_motion + CONV_STD_LOGIC_VECTOR(1,10);
-			
 			--No collision
 			collision_temp <= '0';
-		
 
-		end if;
-
-		
-		if (click = '1' and prev_click = '0' and at_top='0') then
-			-- Move ball up by 10 pixels
-			ball_y_motion := -CONV_STD_LOGIC_VECTOR(8,10);
-			prev_click <= '1';
-		else
-			-- Reset prev_click to '0' when click goes low
-			prev_click <= click;  
-		end if;	
-	
-
-		-- Compute next ball Y position (if at top or bottom, then don't go further up)
-		ball_y_pos <= ball_y_pos + ball_y_motion;
-		
-		-- Clamp to boundaries
-		if (ball_y_pos + ball_y_motion <= size) then
-			 ball_y_pos <= size; -- if at top, let it stay at top
-		end if;
-
-		
-		if (ball_y_pos + ball_y_motion >= CONV_STD_LOGIC_VECTOR(479,10) - size) then
-			 ball_y_pos <= CONV_STD_LOGIC_VECTOR(479,10) - size; -- if at bottom, let it stay at bottom
 		end if;
 		
 	end if;
-end process Move_Ball;
+end process Check_Collision;
 
 
 --Signal assignments to output

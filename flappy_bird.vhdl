@@ -62,8 +62,10 @@ architecture hw_interface of flappy_bird is
   --Signals for ball
   signal ball_on, ball_r, ball_g, ball_b : std_logic;
   signal ball_enable: std_logic:= '1';
-  SIGNAL collision				: std_logic:= '0';
+  signal ball_y_pos, size				: std_logic_vector(9 DOWNTO 0);
 
+  --Signals for collision
+  SIGNAL collision				: std_logic:= '0';
   
   --Signals for pipe
   signal pipe_r, pipe_g, pipe_b, 
@@ -106,7 +108,8 @@ begin
           pixel_row => pixel_row, pixel_column => pixel_column,
           ball_on_out => ball_on, 
 			 red => ball_r, green => ball_g, blue => ball_b,
-			 collision => collision);
+			 ball_y_pos => ball_y_pos,
+			 size => size);
     
     --LFSR for random pipe gap position
     LFSR_COMPONENT: entity work.lfsr
@@ -149,6 +152,14 @@ begin
 				  pipe_y_pos => pipe3_y_pos,
 				  pipe_on => pipe3_on,
 				  pipe_enable => pipe3_enable);
+    
+
+  COLLISION_COMPONENT: entity work.collision
+  PORT MAP (
+        vert_sync => vs, 
+        ball_y_pos => ball_y_pos,
+		  ball_size => size,
+        collision => collision);
 
     -- For text display 
     -- 1. A instance of VGA_SYNC to generate the sync signals and pixel coordinates
