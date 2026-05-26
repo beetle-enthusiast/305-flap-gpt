@@ -3,6 +3,8 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.text_pkg.all;
+use work.custom_types.all;
+
 
 entity flappy_bird is
   port (
@@ -55,6 +57,22 @@ architecture hw_interface of flappy_bird is
   signal red_in, green_in, blue_in : std_logic_vector(3 downto 0);
   signal red_sig, green_sig, blue_sig : std_logic_vector(3 downto 0);
   signal hs, vs : std_logic;
+
+
+  signal current_state  : game_state;
+signal game_mode      : std_logic;
+signal game_reset     : std_logic;
+signal game_pause     : std_logic;
+signal player_dead    : std_logic;
+
+
+-- SIGNALS FOR SCREENS
+signal r_start,    g_start,    b_start    : std_logic_vector(3 downto 0);
+signal r_gameplay, g_gameplay, b_gameplay : std_logic_vector(3 downto 0);
+signal r_pause,    g_pause,    b_pause    : std_logic_vector(3 downto 0);
+signal r_gameover, g_gameover, b_gameover : std_logic_vector(3 downto 0);
+
+signal start_vo, gameplay_vo, pause_vo, gameover_vo : std_logic;
 
   -- -- Signals for text display
   -- signal r_start, g_start, b_start : std_logic_vector(3 downto 0);
@@ -159,69 +177,102 @@ begin
         mouse_row => mouse_row,
         mouse_col => mouse_col,
         start_clicked => start_clicked_sig,
-        video_on => gameplay_video_on,
-        red_out => r_screen,
-        green_out => g_screen,
-        blue_out => b_screen
+        video_on => start_vo,
+        red_out => r_start,
+        green_out => g_start,
+        blue_out => b_start
     );
 
 
-    -- VGA_GAMEPLAY_screen : entity work.gameplay_screen
-    -- port map (
-    --     pixel_row => pixel_row,
-    --     pixel_column => pixel_column,
-    --     clock_25Mhz => CLOCK_25,
-    --     score => 10, -- Placeholder score value
-    --     level => 3, -- Placeholder level value
-    --     lives => 3, -- Placeholder lives value MAX 3 
-    --     red_out => r_screen,
-    --     green_out => g_screen,
-    --     blue_out => b_screen,
-    --     video_on => gameplay_video_on
-    -- );
+STATUS_FSM : entity work.game_fsm
+port map (
+    clk         => CLOCK_25,
+    PLAY        => start_clicked_sig or (not push_button_1),
+    RESTART     => not push_button_2,
+    MODE        => SW(0),
+    state       => current_state,
+    game_mode   => game_mode,
+    reset       => game_reset,
+    pause       => game_pause,
+    player_dead => player_dead
+);
 
-    -- -- VGA_Game over screen
-    -- VGA_GAMEOVER_screen : entity work.gameover_screen
-    -- port map (
-    --     pixel_row => pixel_row,
-    --     pixel_column => pixel_column,
-    --     clock_25Mhz => CLOCK_25,
-    --     score => 10, -- Placeholder score value
-    --     is_high_score => '1', -- Placeholder high score flag
-    --     red_out => r_screen,
-    --     green_out => g_screen,
-    --     blue_out => b_screen,
-    --     video_on => gameplay_video_on
-    -- );
+player_dead <= '0';
 
-    -- -- VGA_PAUSE_screen : entity work.pause_screen
+    VGA_GAMEPLAY_screen : entity work.gameplay_screen
+    port map (
+        pixel_row => pixel_row,
+        pixel_column => pixel_column,
+        clock_25Mhz => CLOCK_25,
+        score => 10, -- Placeholder score value
+        level => 3, -- Placeholder level value
+        lives => 3, -- Placeholder lives value MAX 3 
+        red_out => r_gameplay,
+        green_out => g_gameplay,
+        blue_out => b_gameplay,
+        video_on => gameplay_vo
+    );
+
+    -- VGA_Game over screen
+    VGA_GAMEOVER_screen : entity work.gameover_screen
+    port map (
+        pixel_row => pixel_row,
+        pixel_column => pixel_column,
+        clock_25Mhz => CLOCK_25,
+        score => 10, -- Placeholder score value
+        is_high_score => '1', -- Placeholder high score flag
+        red_out => r_gameover,
+        green_out => g_gameover,
+        blue_out => b_gameover,
+        video_on => gameover_vo
+    );
+
     -- VGA_PAUSE_screen : entity work.pause_screen
-    -- port map (
-    --     pixel_row => pixel_row,
-    --     pixel_column => pixel_column,
-    --     clock_25Mhz => CLOCK_25,
-    --     score => 10, -- Placeholder score value
-    --     level => 3, -- Placeholder level value
-    --     lives => 3, -- Placeholder lives value MAX 3 
-    --     red_out => r_screen,
-    --     green_out => g_screen,
-    --     blue_out => b_screen,
-    --     video_on => gameplay_video_on
-    -- );
+    VGA_PAUSE_screen : entity work.pause_screen
+    port map (
+        pixel_row => pixel_row,
+        pixel_column => pixel_column,
+        clock_25Mhz => CLOCK_25,
+        score => 10, -- Placeholder score value
+        level => 3, -- Placeholder level value
+        lives => 3, -- Placeholder lives value MAX 3 
+        red_out => r_pause,
+        green_out => g_pause,
+        blue_out => b_pause,
+        video_on => pause_vo
+    );
 
       
 
-  -- Connect the mux outputs to the VGA outputs
-  red_in   <= cursor_r when cursor_on = '1' else
-            r_screen when gameplay_video_on = '1' else
-            bg_r;
-green_in <= cursor_g when cursor_on = '1' else
-            g_screen when gameplay_video_on = '1' else
-            bg_g;
-blue_in  <= cursor_b when cursor_on = '1' else
-            b_screen when gameplay_video_on = '1' else
-            bg_b;
+red_in <= cursor_r   when cursor_on = '1' else
+          r_start    when current_state = START_MENU  and start_vo    = '1' else
+          bg_r       when current_state = START_MENU                        else
+          r_gameplay when current_state = PLAY_GAME   and gameplay_vo = '1' else
+          bg_r       when current_state = PLAY_GAME                         else
+          r_pause    when current_state = PAUSE_GAME  and pause_vo    = '1' else
+          bg_r       when current_state = PAUSE_GAME                        else
+          r_gameover when current_state = GAME_OVER   and gameover_vo = '1' else
+          bg_r;
 
+green_in <= cursor_g   when cursor_on = '1' else
+            g_start    when current_state = START_MENU  and start_vo    = '1' else
+            bg_g       when current_state = START_MENU                        else
+            g_gameplay when current_state = PLAY_GAME   and gameplay_vo = '1' else
+            bg_g       when current_state = PLAY_GAME                         else
+            g_pause    when current_state = PAUSE_GAME  and pause_vo    = '1' else
+            bg_g       when current_state = PAUSE_GAME                        else
+            g_gameover when current_state = GAME_OVER   and gameover_vo = '1' else
+            bg_g;
+
+blue_in <= cursor_b   when cursor_on = '1' else
+           b_start    when current_state = START_MENU  and start_vo    = '1' else
+           bg_b       when current_state = START_MENU                        else
+           b_gameplay when current_state = PLAY_GAME   and gameplay_vo = '1' else
+           bg_b       when current_state = PLAY_GAME                         else
+           b_pause    when current_state = PAUSE_GAME  and pause_vo    = '1' else
+           bg_b       when current_state = PAUSE_GAME                        else
+           b_gameover when current_state = GAME_OVER   and gameover_vo = '1' else
+           bg_b;
 
   VGA_R <= red_sig;
 VGA_G <= green_sig;

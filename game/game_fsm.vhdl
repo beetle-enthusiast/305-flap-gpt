@@ -1,3 +1,42 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library work;
+use work.custom_types.all;
+
+--  Control inputs
+--    PLAY: Selects options and play/pauses the active game
+--    RESTART:  Quits game and goes to start menu without displaying score
+--    MODE: 2-state switch which selects the game mode of the new game
+
+--  Control signals
+--    state:  Current game state (START_MENU, PLAY_GAME, PAUSE_GAME, GAME_OVER)
+--    game_mode:  Game mode of active game
+--    reset:  Resets all stored game data / components
+--    pause:  Pause menu is displayed and game logic is halted
+
+--  Status signals
+--    player_dead:  Signals that the active game is over
+
+entity game_fsm is
+  port (
+    clk : in  std_logic;  -- 25MHz Clock
+
+    -- Control inputs
+    PLAY, RESTART : in  std_logic; -- Active HIGH (must invert button inputs)
+    MODE          : in  std_logic;
+
+    -- Control signals
+    state         : out game_state;
+    game_mode     : out std_logic;
+    reset, pause  : out std_logic;
+
+    -- Status signals
+    player_dead   : in  std_logic
+  );
+end game_fsm;
+
 architecture shmoovement of game_fsm is
 
   signal current_state                : game_state := START_MENU;

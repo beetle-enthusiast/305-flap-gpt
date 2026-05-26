@@ -470,6 +470,8 @@ set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name FITTER_EFFORT "FAST FIT"
 set_location_assignment PIN_U7 -to push_button_1
 set_location_assignment PIN_W9 -to push_button_2
+set_global_assignment -name VHDL_FILE game/game_fsm.vhdl
+set_global_assignment -name VHDL_FILE custom_types.vhdl
 set_global_assignment -name VHDL_FILE background/vga_background.vhdl
 set_global_assignment -name VHDL_FILE background/background_rom.vhd
 set_global_assignment -name QIP_FILE background/background_rom.qip
