@@ -63,9 +63,15 @@ architecture hw_interface of flappy_bird is
   signal ball_r, ball_g, ball_b : std_logic;
   
   --Signals for pipe
-  signal pipe_r, pipe_g, pipe_b, pipe2_start, pipe3_start, pipe_on, pipe1_on, pipe2_on, pipe3_on: std_logic;
+  signal pipe_r, pipe_g, pipe_b, 
+		   pipe2_start, pipe3_start, 
+		   pipe_on, pipe1_on, pipe2_on, pipe3_on, 
+         pipe_enable, pipe1_enable, pipe2_enable, pipe3_enable: std_logic;
   signal pipe1_x_pos, pipe2_x_pos, pipe3_x_pos: std_logic_vector(10 downto 0);
   signal pipe1_y_pos, pipe2_y_pos, pipe3_y_pos: std_logic_vector(9 downto 0);
+  
+  --Signals for lfsr
+  signal randomiser_value : std_logic_vector (7 downto 0);
   
   
 
@@ -98,6 +104,10 @@ begin
     PORT MAP (	click => left_click, pb1 => push_button_1, pb2 => push_button_2, clk => CLOCK_25, vert_sync => vs,
           pixel_row => pixel_row, pixel_column => pixel_column,
           red => ball_r, green => ball_g, blue => ball_b);
+    
+    --LFSR for random pipe gap position
+    LFSR_COMPONENT: entity work.lfsr
+    PORT MAP (clk => CLOCK_25, enable => pipe_enable, random_value => randomiser_value);
 
     -- For pipe movement
     -- Instantiate PIPE component
@@ -106,27 +116,33 @@ begin
 				  start=> '1', 
 				  pixel_row => pixel_row, 
 				  pixel_column => pixel_column,
+          randomiser_value => randomiser_value,
 				  pipe_x_pos => pipe1_x_pos,
 				  pipe_y_pos => pipe1_y_pos,
-				  pipe_on => pipe1_on);
+				  pipe_on => pipe1_on,
+				  pipe_enable => pipe1_enable);
 				  
 	PIPE2_COMPONENT: entity work.pipe
     PORT MAP (vert_sync => vs, 
 				  start=> pipe2_start, 
 				  pixel_row => pixel_row, 
 				  pixel_column => pixel_column,
+          randomiser_value => randomiser_value,
 				  pipe_x_pos => pipe2_x_pos,
 				  pipe_y_pos => pipe2_y_pos,
-				  pipe_on => pipe2_on);
+				  pipe_on => pipe2_on,
+				  pipe_enable => pipe2_enable);
 				  
 	PIPE3_COMPONENT: entity work.pipe
     PORT MAP (vert_sync => vs, 
 				  start=> pipe3_start, 
 				  pixel_row => pixel_row, 
 				  pixel_column => pixel_column,
+          randomiser_value => randomiser_value,
 				  pipe_x_pos => pipe3_x_pos,
 				  pipe_y_pos => pipe3_y_pos,
-				  pipe_on => pipe3_on);
+				  pipe_on => pipe3_on,
+				  pipe_enable => pipe3_enable);
 
     -- For text display 
     -- 1. A instance of VGA_SYNC to generate the sync signals and pixel coordinates
@@ -193,6 +209,8 @@ begin
 					 '0';
 		
   pipe_on <= pipe1_on or pipe2_on or pipe3_on;
+  
+  pipe_enable <= pipe1_enable or pipe2_enable or pipe3_enable;
   
 
   -- Scale from switchs
