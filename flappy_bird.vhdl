@@ -28,6 +28,8 @@ architecture hw_interface of flappy_bird is
   -- TEMPORARY: DELETE ONCE DDONE
   -- signal CLOCK_50 : std_logic;
 
+
+
   signal CLOCK_25       : std_logic;
   signal PLAY, RESTART  : std_logic;
   signal MODE           : std_logic;
@@ -42,6 +44,12 @@ architecture hw_interface of flappy_bird is
   signal left_click, right_click  : std_logic;
   signal mouse_row, mouse_col     : std_logic_vector(9 downto 0);
 
+  SIGNAL cursor_r, cursor_g, cursor_b : std_logic_vector(3 downto 0);
+  SIGNAL cursor_on : std_logic;
+  SIGNAL row_int, col_int : integer;
+  SIGNAL mouse_row_int, mouse_col_int : integer;
+
+
   -- Internal signals for VGA
   signal pixel_row, pixel_column    : std_logic_vector(9 downto 0);
   signal red_in, green_in, blue_in : std_logic_vector(3 downto 0);
@@ -52,6 +60,28 @@ architecture hw_interface of flappy_bird is
 
   signal bg_r, bg_g, bg_b : std_logic_vector(3 downto 0);
 
+-- Signals for start screen
+  signal start_clicked : std_logic;
+  signal start_r, start_g, start_b : std_logic_vector(3 downto 0);
+  signal start_video_on : std_logic;
+
+
+
+  -- Signals for gameplay screen  
+  signal r_game, g_game, b_game : std_logic_vector(3 downto 0);
+  signal game_video_on : std_logic;
+
+  --Signals for pause
+  signal r_pause,    g_pause,    b_pause    : std_logic_vector(3 downto 0);
+  signal pause_video_on : std_logic;
+
+  --Signals for gameover 
+  signal r_gameover,g_gameover,b_gameover : std_logic_vector(3 downto 0);
+  signal gameover_video_on : std_logic;
+
+
+
+
   component pll_25mhz is
     port (
       refclk   : in  std_logic; --  refclk.clk
@@ -61,6 +91,23 @@ architecture hw_interface of flappy_bird is
   end component;
 
 begin
+
+
+   -- GENERATE CURSOR TEMP.
+
+  row_int <= to_integer(unsigned(pixel_row));
+  col_int <= to_integer(unsigned(pixel_column));
+  mouse_row_int <= to_integer(unsigned(mouse_row));
+  mouse_col_int <= to_integer(unsigned(mouse_col));
+
+  cursor_on <= '1' when (row_int >= mouse_row_int and row_int < mouse_row_int + 8 and col_int >= mouse_col_int and col_int < mouse_col_int + 8) else '0';
+
+  cursor_r <= "1111" when cursor_on = '1' else "0000";
+  cursor_g <= "0000" when cursor_on = '1' else "0000";
+  cursor_b <= "1111" when cursor_on = '1' else "0000";
+
+
+
 
   CLK_DIV_2 : pll_25mhz
     port map (
@@ -109,6 +156,13 @@ begin
         blue_out => bg_b
   );
 
+
+  -- Button/Switch controls
+  PLAY <= not KEY(0) or start_clicked; -- Start game when play button is pressed or start screen is clicked
+  RESTART <= not KEY(1);
+  MODE <= SW(0);
+
+
   STATUS_FSM  : entity work.game_fsm
     port map (
       clk => CLOCK_25,
@@ -119,14 +173,111 @@ begin
       game_mode => game_mode,
       reset => game_reset,
       pause => game_pause,
-      player_dead => player_dead
+      player_dead => '1'
   );
+
+  -- START SCREEN
+
+  START_SCREEN : entity work.start_screen
+    port map (
+      pixel_row => pixel_row,
+      pixel_column => pixel_column,
+      clock_25Mhz => CLOCK_25,
+      mode => MODE,
+      mouse_click => left_click,
+      mouse_row => mouse_row,
+      mouse_col => mouse_col,
+      video_on => start_video_on,
+      start_clicked => start_clicked,
+      red_out => start_r,
+      green_out => start_g,
+      blue_out => start_b
+  );  
+
+
+  -- Game play screen
+GAME_PLAY_SCREEN : entity work.gameplay_screen
+    port map (
+    pixel_row => pixel_row,
+    pixel_column => pixel_column,
+    clock_25Mhz => CLOCK_25,
+    mode => game_mode,
+    score => 0,
+    level => 1,
+    lives => 3,
+    video_on => game_video_on ,
+    red_out => r_game,
+    green_out => g_game,
+    blue_out => b_game
+  );
+
+  -- Pause screeen
+   -- VGA_PAUSE_screen : entity work.pause_screen
+    VGA_PAUSE_screen : entity work.pause_screen
+    port map (
+        pixel_row => pixel_row,
+        pixel_column => pixel_column,
+        clock_25Mhz => CLOCK_25,
+        score => 10, -- Placeholder score value
+        level => 3, -- Placeholder level value
+        lives => 3, -- Placeholder lives value MAX 3 
+        red_out => r_pause,
+        green_out => g_pause,
+        blue_out => b_pause,
+        video_on => pause_video_on
+    );
+
+  -- GAMEOVER SCREEN
+      VGA_GAMEOVER_screen : entity work.gameover_screen
+    port map (
+        pixel_row => pixel_row,
+        pixel_column => pixel_column,
+        clock_25Mhz => CLOCK_25,
+        score => 10, -- Placeholder score value
+        is_high_score => '1', -- Placeholder high score flag
+        red_out => r_gameover,
+        green_out => g_gameover,
+        blue_out => b_gameover,
+        video_on => gameover_video_on
+    );
+
+
+  
+
 
 
   -- VGA background assignment
-  red_in <= bg_r;
-  green_in <= bg_g;
-  blue_in <= bg_b;
+red_in <= cursor_r when cursor_on = '1' else
+          start_r when state = START_MENU and start_video_on = '1' else
+          bg_r when state = START_MENU else
+          r_game when state = PLAY_GAME and game_video_on = '1' else
+          bg_r when state = PLAY_GAME else
+          r_pause when state = PAUSE_GAME and pause_video_on = '1' else
+          bg_r when state = PAUSE_GAME else
+          r_gameover when state = GAME_OVER and gameover_video_on = '1' else 
+          bg_r when STATE = GAME_OVER else
+          bg_r;
+
+green_in <= cursor_g when cursor_on = '1' else
+            start_g when state = START_MENU and start_video_on = '1' else
+            bg_g when state = START_MENU else
+            g_game when state = PLAY_GAME and game_video_on = '1' else
+            bg_g when state = PLAY_GAME else
+            g_pause when state = PAUSE_GAME and pause_video_on = '1' else
+            bg_g when state = PAUSE_GAME else
+            g_gameover when state = GAME_OVER and gameover_video_on = '1' else 
+            bg_g when STATE = GAME_OVER else
+            bg_g;
+
+blue_in <= cursor_b when cursor_on = '1' else
+           start_b when state = START_MENU and start_video_on = '1' else
+           bg_b when state = START_MENU else
+           b_game when state = PLAY_GAME and game_video_on = '1' else
+           bg_b when state = PLAY_GAME else
+           b_pause when state = PAUSE_GAME and pause_video_on = '1' else
+           b_gameover when state = GAME_OVER and gameover_video_on = '1' else 
+           bg_b when STATE = GAME_OVER else
+			  bg_b;
 
   -- VGA driver assignment
   VGA_R <= red_sig;
@@ -137,10 +288,7 @@ begin
   VGA_VS <= vs;
   
   
-  -- Button/Switch controls
-  PLAY <= not KEY(0);
-  RESTART <= not KEY(1);
-  MODE <= SW(0);
+  
 
   -- For testing
   LEDR(1) <=  '1' when game_pause = '1'

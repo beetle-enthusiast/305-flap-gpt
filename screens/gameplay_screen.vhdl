@@ -10,6 +10,7 @@ ENTITY GAMEPLAY_SCREEN IS
 	PORT(
         pixel_row, pixel_column : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
         clock_25Mhz : IN STD_LOGIC;
+        mode : IN STD_LOGIC;
         score : IN INTEGER;
         level : IN INTEGER;
         lives : IN INTEGER;
@@ -41,6 +42,18 @@ signal r_heart2, g_heart2, b_heart2 : std_logic_vector(3 downto 0);
 signal r_heart3, g_heart3, b_heart3 : std_logic_vector(3 downto 0);
   
 signal heart1_vis, heart2_vis, heart3_vis : std_logic;
+
+
+--Signals for training mode text
+signal msg_training : text_string(1 to 13) := "TRAINING MODE";
+signal r_training, g_training, b_training : std_logic_vector(3 downto 0);
+
+--Signals for single player mode text
+signal msg_sp : text_string(1 to 13) := "SINGLE PLAYER";
+signal r_sp, g_sp, b_sp : std_logic_vector(3 downto 0);
+
+--Mode rgb
+signal r_mode,g_mode,b_mode : std_logic_vector(3 downto 0 );
 
 begin
 
@@ -126,6 +139,42 @@ begin
     blue_out => b_score
     );
 
+    -- Text for tm
+          -- text for lives for now 
+    VGA_TRAINING_MODE : entity work.VGA_TEXT
+    port map (
+    pixel_row => pixel_row,
+    pixel_column => pixel_column,
+    clock_25Mhz => clock_25Mhz,
+    message => msg_training,
+    start_row => 12,
+    start_col => 100,
+    scale => 1,
+    text_r => "1111",
+    text_g => "1111",
+    text_b => "1111",
+    red_out => r_training,
+    green_out => g_training,
+    blue_out => b_training
+    );
+
+    VGA_SP_MODE : entity work.VGA_TEXT
+   port map (
+    pixel_row => pixel_row,
+    pixel_column => pixel_column,
+    clock_25Mhz => clock_25Mhz,
+    message => msg_sp,
+    start_row => 12,
+    start_col => 100,
+    scale => 1,
+    text_r => "1111",
+    text_g => "1111",
+    text_b => "1111",
+    red_out => r_sp,
+    green_out => g_sp,
+    blue_out => b_sp
+    );
+
     heart1_vis <= '1' when lives >= 1 else '0';
     heart2_vis <= '1' when lives >= 2 else '0';
     heart3_vis <= '1' when lives >= 3 else '0';
@@ -170,20 +219,26 @@ HEART3 : entity work.heart
         blue_out => b_heart3
     );
 
-    -- Combine the outputs for the box and the text
-    red_out <= box_r or r_score or r_level or  r_heart1 or r_heart2 or r_heart3;
-    green_out <= box_g or g_score or g_level  or g_heart1 or g_heart2 or g_heart3;
-    blue_out <= box_b or b_score or b_level  or b_heart1 or b_heart2 or b_heart3;
+r_mode <= r_training when mode = '0' else r_sp;
+g_mode <= g_training when mode = '0' else g_sp;
+b_mode <= b_training when mode = '0' else b_sp;
+
+    red_out <= box_r or r_score or r_level or r_heart1 or r_heart2 or r_heart3 or r_mode;
+green_out <= box_g or g_score or g_level or g_heart1 or g_heart2 or g_heart3 or g_mode;
+blue_out <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or b_mode;
 
     -- VIDEO ON SIGNAL
-    video_on <= '1' when (
+  video_on <= '1' when (
     box_on = '1' or
-    r_score /= "0000" or
-    r_level /= "0000" or
-    r_heart1 /= "0000" or
-    r_heart2 /= "0000" or
-    r_heart3 /= "0000"
+    r_score /= "0000" or g_score /= "0000" or b_score /= "0000" or
+    r_level /= "0000" or g_level /= "0000" or b_level /= "0000" or
+    r_heart1 /= "0000" or g_heart1 /= "0000" or b_heart1 /= "0000" or
+    r_heart2 /= "0000" or g_heart2 /= "0000" or b_heart2 /= "0000" or
+    r_heart3 /= "0000" or g_heart3 /= "0000" or b_heart3 /= "0000" or
+    r_mode /= "0000" or g_mode /= "0000" or b_mode /= "0000"
 ) else '0';
+
+
 
 
 END a;

@@ -159,11 +159,12 @@ blue_out <= b_gameover_gated or b_highscore_gated or b_growths_gated or b_score 
 
 video_on <= '1' when (
     box_on = '1' or
-    r_gameover_gated /= "0000" or
-    r_highscore_gated /= "0000" or
-    r_growths_gated /= "0000" or
-    r_score /= "0000"
+    r_gameover /= "0000" or g_gameover /= "0000" or b_gameover /= "0000" or
+    r_score /= "0000" or g_score /= "0000" or b_score /= "0000" or
+    r_highscore_gated /= "0000" or g_highscore_gated /= "0000" or b_highscore_gated /= "0000" or
+    r_growths_gated /= "0000" or g_growths_gated /= "0000" or b_growths_gated /= "0000"
 ) else '0';
+
 END a;
 
 

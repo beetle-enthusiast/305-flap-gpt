@@ -295,21 +295,23 @@ VGA_TEXT_TM : entity work.VGA_TEXT
 
 
     
-    video_on <= '1' when (
-    r_title /= "0000" or
-    r_subtitle /= "0000" or
-    r_tm /= "0000" or
-    r_sp /= "0000" or
-    r_Sbutton /= "0000" or
-    tm_box = '1' or
-    tm_box_on = '1' or
-    sp_box = '1' or
-    sp_box_on = '1' or
-    start_box_border = '1' or
-    start_box_fill = '1' or
-    start_box_shadow = '1' or
-    start_box_hovered = '1'
+   video_on <= '1' when (
+    r_title /= "0000" or g_title /= "0000" or b_title /= "0000" or
+    r_subtitle /= "0000" or g_subtitle /= "0000" or b_subtitle /= "0000" or
+    r_tm /= "0000" or g_tm /= "0000" or b_tm /= "0000" or
+    r_sp /= "0000" or g_sp /= "0000" or b_sp /= "0000" or
+    r_Sbutton /= "0000" or g_Sbutton /= "0000" or b_Sbutton /= "0000" or
+    tm_box_r /= "0000" or tm_box_g /= "0000" or tm_box_b /= "0000" or
+    tm_box_fill_r /= "0000" or tm_box_fill_g /= "0000" or tm_box_fill_b /= "0000" or
+    sp_box_r /= "0000" or sp_box_g /= "0000" or sp_box_b /= "0000" or
+    sp_box_fill_r /= "0000" or sp_box_fill_g /= "0000" or sp_box_fill_b /= "0000" or
+    start_box_r /= "0000" or start_box_g /= "0000" or start_box_b /= "0000" or
+    start_box_fill_r /= "0000" or start_box_fill_g /= "0000" or start_box_fill_b /= "0000" or
+    start_box_shadow_r /= "0000" or start_box_shadow_g /= "0000" or start_box_shadow_b /= "0000" or
+    start_box_hover_r /= "0000" or start_box_hover_g /= "0000" or start_box_hover_b /= "0000"
 ) else '0';
+
+
 
 END a;
 
