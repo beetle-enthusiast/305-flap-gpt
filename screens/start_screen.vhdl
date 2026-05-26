@@ -307,8 +307,7 @@ VGA_TEXT_TM : entity work.VGA_TEXT
     sp_box_on = '1' or
     start_box_border = '1' or
     start_box_fill = '1' or
-    start_box_shadow = '1' or
-    start_box_hovered = '1'
+    start_box_shadow = '1'
 ) else '0';
 
 END a;
