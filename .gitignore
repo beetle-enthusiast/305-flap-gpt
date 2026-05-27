@@ -9,7 +9,9 @@ hps_isw_software/
 common/
 timing/
 
-/ip/**/*
+
+ip/**/*
+!ip/**/
 !/ip/**/*.ip
 !/ip/**/*.qsys
 !/ip/**/*.qip
