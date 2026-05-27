@@ -23,6 +23,10 @@ END GAMEPLAY_SCREEN;
 
 ARCHITECTURE a OF GAMEPLAY_SCREEN IS
 
+-- Difficulty controls - 
+signal points : integer range 0 to 127;
+signal scroll_speed : integer range 0 to 15;
+
 SIGNAL box_row_int, box_col_int : integer := 0;
 SIGNAL box_on : std_logic;
 SIGNAL box_r, box_g, box_b : std_logic_vector(3 downto 0);
@@ -86,6 +90,12 @@ signal r_mode,g_mode,b_mode : std_logic_vector(3 downto 0 );
 -- SIGNALS ADDED ENDS
 
 begin
+
+    LEVEL_CALC : entity work.levels
+    port map (
+      points => points,
+      scroll_speed => scroll_speed
+    );
 
     box_row_int <= to_integer(unsigned(pixel_row));
     box_col_int <= to_integer(unsigned(pixel_column));

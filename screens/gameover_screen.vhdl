@@ -19,6 +19,7 @@ END GAMEOVER_SCREEN;
 
 ARCHITECTURE a OF GAMEOVER_SCREEN IS
 
+
 SIGNAL msg_gameover : text_string(1 to 19) := "WOMP WOMP YOU LOSE!";
 signal msg_score : text_string(1 to 10) := "SCORE: 000";
 SIGNAL msg_highscore : text_string(1 to 15) := "NEW HIGH SCORE!";
@@ -38,11 +39,6 @@ signal r_gameover_gated, g_gameover_gated, b_gameover_gated : std_logic_vector(3
 signal r_highscore_gated, g_highscore_gated, b_highscore_gated : std_logic_vector(3 downto 0);
 signal r_growths_gated, g_growths_gated, b_growths_gated : std_logic_vector(3 downto 0);
 
-
--- Add button to restart game
--- 2 options - play again or go to menu screen
-
---TODO : ADD BUTTON TO GO MENU OR PLAY AGAIN
   
 
 begin
@@ -138,8 +134,8 @@ begin
     green_out => g_growths,
     blue_out => b_growths
     );
-    
-   
+
+
 r_gameover_gated <= r_gameover ;
 g_gameover_gated <= g_gameover ;
 b_gameover_gated <= b_gameover ;
