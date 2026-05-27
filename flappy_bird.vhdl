@@ -70,6 +70,11 @@ architecture hw_interface of flappy_bird is
   -- Signals for gameplay screen  
   signal r_game, g_game, b_game : std_logic_vector(3 downto 0);
   signal game_video_on : std_logic;
+  signal current_score : integer range 0 to 999;
+  signal current_level : integer range 1 to 3;
+  signal current_lives : integer range 0 to 3;
+  signal is_high_score : std_logic;
+
 
   --Signals for pause
   signal r_pause,    g_pause,    b_pause    : std_logic_vector(3 downto 0);
@@ -78,6 +83,10 @@ architecture hw_interface of flappy_bird is
   --Signals for gameover 
   signal r_gameover,g_gameover,b_gameover : std_logic_vector(3 downto 0);
   signal gameover_video_on : std_logic;
+
+  -- Gated the mouse clicks
+
+  signal gated_start_clicked : std_logic;
 
 
 
@@ -158,7 +167,8 @@ begin
 
 
   -- Button/Switch controls
-  PLAY <= not KEY(0) or start_clicked; -- Start game when play button is pressed or start screen is clicked
+  gated_start_clicked <= start_clicked when state = START_MENU else '0';
+  PLAY <= not KEY(0) or gated_start_clicked;  
   RESTART <= not KEY(1);
   MODE <= SW(0);
 
@@ -184,7 +194,7 @@ begin
       pixel_column => pixel_column,
       clock_25Mhz => CLOCK_25,
       mode => MODE,
-      mouse_click => left_click,
+      mouse_click => gate_start_click,
       mouse_row => mouse_row,
       mouse_col => mouse_col,
       video_on => start_video_on,
@@ -203,11 +213,12 @@ GAME_PLAY_SCREEN : entity work.gameplay_screen
     pixel_column => pixel_column,
     clock_25Mhz => CLOCK_25,
     mode => game_mode,
-    score => 0,
-    level => 1,
-    lives => 3,
-    left_click => left_click,
-    video_on => game_video_on ,
+    score => current_score,
+    level => current_level,
+    lives => current_lives,
+    high_score => is_high_score,
+    left_click => gate_left_click,
+    video_on => game_video_on,
     red_out => r_game,
     green_out => g_game,
     blue_out => b_game
@@ -220,9 +231,9 @@ GAME_PLAY_SCREEN : entity work.gameplay_screen
         pixel_row => pixel_row,
         pixel_column => pixel_column,
         clock_25Mhz => CLOCK_25,
-        score => 10, -- Placeholder score value
-        level => 3, -- Placeholder level value
-        lives => 3, -- Placeholder lives value MAX 3 
+        score => current_score, -- Placeholder score value
+        level => current_level, -- Placeholder level value
+        lives => current_lives, -- Placeholder lives value MAX 3 
         red_out => r_pause,
         green_out => g_pause,
         blue_out => b_pause,
@@ -235,8 +246,8 @@ GAME_PLAY_SCREEN : entity work.gameplay_screen
         pixel_row => pixel_row,
         pixel_column => pixel_column,
         clock_25Mhz => CLOCK_25,
-        score => 10, -- Placeholder score value
-        is_high_score => '1', -- Placeholder high score flag
+        score => current_score, 
+        is_high_score => is_high_score, 
         red_out => r_gameover,
         green_out => g_gameover,
         blue_out => b_gameover,

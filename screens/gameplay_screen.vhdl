@@ -12,10 +12,11 @@ ENTITY GAMEPLAY_SCREEN IS
         pixel_row, pixel_column : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
         clock_25Mhz : IN STD_LOGIC;
         mode : IN STD_LOGIC;
-        score : IN INTEGER;
-        level : IN INTEGER;
-        lives : IN INTEGER;
         left_click : IN std_logic;
+        is_high_score : out STD_LOGIC;
+        score : out integer range 0 to 999;
+        level : out integer range 1 to 3;
+        lives : out integer range 0 to 3;
         video_on : OUT STD_LOGIC;
         red_out, green_out, blue_out : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
     );
@@ -36,6 +37,12 @@ SIGNAL r_score, g_score, b_score : std_logic_vector(3 downto 0);
 SIGNAL r_level, g_level, b_level : std_logic_vector(3 downto
     0);
 SIGNAL r_lives, g_lives, b_lives : std_logic_vector(3 downto 0);
+
+--Signals for lives,score,level
+-- In the signals section, add:
+signal score_int : integer range 0 to 999 := 0;
+signal level_int : integer range 1 to 3   := 1;
+signal lives_int : integer range 0 to 3   := 3;
 
 
 -- Signals for hearts
@@ -96,21 +103,29 @@ begin
     box_g <= "0001" when box_on = '1' else "0000";
     box_b <= "0000" when box_on = '1' else "0000";
 
-    process(score)
+    -- FOR NOW assigning outputs to score, level and lives 
+    score <= score_int;
+    level <= level_int;
+    lives <= lives_int;
+
+    --HARDCODED HIGH SCORE
+    is_high_score <= '0';
+
+    process(score_int)
     begin
-        msg_score(8) <= character'val(score / 100 + 48);
-        msg_score(9) <= character'val((score mod 100) / 10 + 48);
-        msg_score(10) <= character'val(score mod 10 + 48);
+        msg_score(8) <= character'val(score_int / 100 + 48);
+        msg_score(9) <= character'val((score_int mod 100) / 10 + 48);
+        msg_score(10) <= character'val(score_int mod 10 + 48);
     end process;
 
-    process(level)
+    process(level_int)
     begin
-        msg_level(8) <= character'val(level + 48);
+        msg_level(8) <= character'val(level_int + 48);
     end process;
 
-    process(lives)
+    process(lives_int)
     begin
-        msg_lives(8) <= character'val(lives + 48);
+        msg_lives(8) <= character'val(lives_int + 48);
     end process;
 
 
@@ -205,9 +220,9 @@ begin
     blue_out => b_sp
     );
 
-    heart1_vis <= '1' when lives >= 1 else '0';
-    heart2_vis <= '1' when lives >= 2 else '0';
-    heart3_vis <= '1' when lives >= 3 else '0';
+    heart1_vis <= '1' when lives_int >= 1 else '0';
+    heart2_vis <= '1' when lives_int >= 2 else '0';
+    heart3_vis <= '1' when lives_int >= 3 else '0';
     
     -- Hearts for lives : 
    HEART1 : entity work.heart
@@ -353,9 +368,9 @@ g_mode <= g_training when mode = '0' else g_sp;
 b_mode <= b_training when mode = '0' else b_sp;
 
 
- red_in   <= "0000" when pipe_on = '1' else ball_r when ball_on = '1' ;
- green_in <= "1111" when pipe_on = '1' else ball_g when ball_on = '1';
- blue_in  <= "0000" when pipe_on = '1' else ball_b when ball_on = '1';
+red_in   <= "0000" when pipe_on = '1' else ball_r when ball_on = '1' else "0000";
+green_in <= "1111" when pipe_on = '1' else ball_g when ball_on = '1' else "0000";
+blue_in  <= "0000" when pipe_on = '1' else ball_b when ball_on = '1' else "0000";
 
 red_out <= box_r or r_score or r_level or r_heart1 or r_heart2 or r_heart3 or r_mode  or red_in;
 green_out <= box_g or g_score or g_level or g_heart1 or g_heart2 or g_heart3 or g_mode or green_in;
@@ -364,13 +379,14 @@ blue_out <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or b
     -- VIDEO ON SIGNAL
   video_on <= '1' when (
     box_on = '1' or
+    pipe_on = '1' or
+    ball_on = '1' or
     r_score /= "0000" or g_score /= "0000" or b_score /= "0000" or
     r_level /= "0000" or g_level /= "0000" or b_level /= "0000" or
     r_heart1 /= "0000" or g_heart1 /= "0000" or b_heart1 /= "0000" or
     r_heart2 /= "0000" or g_heart2 /= "0000" or b_heart2 /= "0000" or
     r_heart3 /= "0000" or g_heart3 /= "0000" or b_heart3 /= "0000" or
-    r_mode /= "0000" or g_mode /= "0000" or b_mode /= "0000" or 
-    red_in = "1111" or green_in = "1111" or blue_in = "1111"
+    r_mode /= "0000" or g_mode /= "0000" or b_mode /= "0000" 
 ) else '0';
 
 END a;

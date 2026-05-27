@@ -10,7 +10,7 @@ ENTITY GAMEOVER_SCREEN IS
 	PORT(
         pixel_row, pixel_column : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
         clock_25Mhz : IN STD_LOGIC;
-        score : IN INTEGER;
+        score : IN INTEGER RANGE 0 TO 999;
         is_high_score : IN STD_LOGIC;
         video_on : OUT STD_LOGIC;
         red_out, green_out, blue_out : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
