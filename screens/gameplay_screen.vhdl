@@ -8,12 +8,14 @@ use work.text_pkg.all;
 
 ENTITY GAMEPLAY_SCREEN IS
 	PORT(
+        vert_sync : IN std_logic;
         pixel_row, pixel_column : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
         clock_25Mhz : IN STD_LOGIC;
         mode : IN STD_LOGIC;
         score : IN INTEGER;
         level : IN INTEGER;
         lives : IN INTEGER;
+        left_click : IN std_logic;
         video_on : OUT STD_LOGIC;
         red_out, green_out, blue_out : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
     );
@@ -55,6 +57,34 @@ signal r_sp, g_sp, b_sp : std_logic_vector(3 downto 0);
 --Mode rgb
 signal r_mode,g_mode,b_mode : std_logic_vector(3 downto 0 );
 
+--SIGNALS ADDED
+  signal red_in, green_in, blue_in : std_logic_vector (3 downto 0);
+
+--Signals for ball
+  signal ball_r, ball_g, ball_b : std_logic_vector (3 downto 0);
+  SIGNAL ball_on : std_logic;
+  signal ball_enable: std_logic:= '1';
+  signal size				: std_logic_vector(9 DOWNTO 0);
+
+  --Signals for collision
+  SIGNAL collision				: std_logic:= '0';
+  SIGNAL pipe_x_pos, ball_x_pos : std_logic_vector(10 downto 0);
+  SIGNAL pipe_y_pos, ball_y_pos : std_logic_vector(9 DOWNTO 0);
+  
+  --Signals for pipe
+  signal pipe_r, pipe_g, pipe_b, 
+		   pipe2_start, pipe3_start, 
+		   pipe_on, pipe1_on, pipe2_on, pipe3_on, 
+         pipe_enable, pipe1_enable, pipe2_enable, pipe3_enable: std_logic;
+  signal pipe_start: std_logic := '1';
+  signal pipe1_x_pos, pipe2_x_pos, pipe3_x_pos: std_logic_vector(10 downto 0);
+  signal pipe1_y_pos, pipe2_y_pos, pipe3_y_pos: std_logic_vector(9 downto 0);
+  
+  
+  --Signals for lfsr
+  signal randomiser_value : std_logic_vector (7 downto 0);
+-- SIGNALS ADDED ENDS
+
 begin
 
     box_row_int <= to_integer(unsigned(pixel_row));
@@ -89,7 +119,7 @@ begin
     -- port map (
     -- pixel_row => pixel_row,
     -- pixel_column => pixel_column,
-    -- clock_25Mhz => clock_25Mhz,
+    -- clock_25MhzMhz => clock_25MhzMhz,
     -- message => msg_lives,
     -- start_row => 12,
     -- start_col => 10,
@@ -219,13 +249,117 @@ HEART3 : entity work.heart
         blue_out => b_heart3
     );
 
+
+
+    -- ADDED COMPONENTS
+    --For ball movement
+    -- Instantiate BOUNCY_BALL component
+    BOUNCY_BALL_COMPONENT: entity work.bouncy_ball
+    PORT MAP (enable=> ball_enable, 
+            click => left_click, 
+            clk => clock_25Mhz, 
+            vert_sync => vert_sync,
+            pixel_row => pixel_row, 
+            pixel_column => pixel_column,
+            ball_on_out => ball_on, 
+            red => ball_r, 
+            green => ball_g, 
+            blue => ball_b,
+            ball_y_pos => ball_y_pos,
+            ball_x_pos => ball_x_pos,
+            size => size);
+    
+    --LFSR for random pipe gap position
+    LFSR_COMPONENT: entity work.lfsr
+    PORT MAP (clk => clock_25Mhz, 
+            enable => pipe_enable, 
+            random_value => randomiser_value);
+
+    -- For pipe movement
+    -- Instantiate PIPE component
+    PIPE1_COMPONENT: entity work.pipe
+    PORT MAP (enable => pipe_start, 
+				  vert_sync => vert_sync, 
+				  start=> '1', 
+				  pixel_row => pixel_row, 
+				  pixel_column => pixel_column,
+                  randomiser_value => randomiser_value,
+				  pipe_x_pos => pipe1_x_pos,
+				  pipe_y_pos => pipe1_y_pos,
+				  pipe_on => pipe1_on,
+				  pipe_enable => pipe1_enable);
+				  
+	PIPE2_COMPONENT: entity work.pipe
+    PORT MAP (enable => pipe_start,
+				  vert_sync => vert_sync, 
+				  start=> pipe2_start, 
+				  pixel_row => pixel_row, 
+				  pixel_column => pixel_column,
+                  randomiser_value => randomiser_value,
+				  pipe_x_pos => pipe2_x_pos,
+				  pipe_y_pos => pipe2_y_pos,
+				  pipe_on => pipe2_on,
+				  pipe_enable => pipe2_enable);
+				  
+	PIPE3_COMPONENT: entity work.pipe
+    PORT MAP (enable => pipe_start,
+				  vert_sync => vert_sync, 
+				  start=> pipe3_start, 
+				  pixel_row => pixel_row, 
+				  pixel_column => pixel_column,
+                  randomiser_value => randomiser_value,
+				  pipe_x_pos => pipe3_x_pos,
+				  pipe_y_pos => pipe3_y_pos,
+				  pipe_on => pipe3_on,
+				  pipe_enable => pipe3_enable);
+    
+
+  COLLISION_COMPONENT: entity work.collision
+  PORT MAP (clk => clock_25Mhz,
+        vert_sync => vert_sync,
+		  ball_on => ball_on,
+		  pipe_on => pipe_on,
+        ball_y_pos => ball_y_pos,
+        ball_size => size,
+        collision => collision,
+		  pipe_start => pipe_start,
+		  ball_enable => ball_enable);
+
+-- ADDITIONAL COMPOENNETS END
+
+  -- Pipe logic
+  pipe3_start<= '1' when pipe2_x_pos <= std_logic_vector(to_unsigned(425, 11))
+						  else 
+					 '0';
+					 
+  pipe2_start<= '1' when pipe1_x_pos <= std_logic_vector(to_unsigned(425, 11))
+						  else 
+					 '0';
+		
+  pipe_on <= pipe1_on or pipe2_on or pipe3_on;
+  
+  pipe_enable <= pipe1_enable or pipe2_enable or pipe3_enable;
+  	 
+
+
+
+
+
+
+
+
 r_mode <= r_training when mode = '0' else r_sp;
 g_mode <= g_training when mode = '0' else g_sp;
 b_mode <= b_training when mode = '0' else b_sp;
 
-    red_out <= box_r or r_score or r_level or r_heart1 or r_heart2 or r_heart3 or r_mode;
-green_out <= box_g or g_score or g_level or g_heart1 or g_heart2 or g_heart3 or g_mode;
-blue_out <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or b_mode;
+
+ red_in   <= "0000" when pipe_on = '1' else ball_r when ball_on = '1' ;
+ green_in <= "1111" when pipe_on = '1' else ball_g when ball_on = '1';
+ blue_in  <= "0000" when pipe_on = '1' else ball_b when ball_on = '1';
+
+red_out <= box_r or r_score or r_level or r_heart1 or r_heart2 or r_heart3 or r_mode  or red_in;
+green_out <= box_g or g_score or g_level or g_heart1 or g_heart2 or g_heart3 or g_mode or green_in;
+blue_out <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or b_mode or blue_in;
 
     -- VIDEO ON SIGNAL
   video_on <= '1' when (
@@ -235,11 +369,9 @@ blue_out <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or b
     r_heart1 /= "0000" or g_heart1 /= "0000" or b_heart1 /= "0000" or
     r_heart2 /= "0000" or g_heart2 /= "0000" or b_heart2 /= "0000" or
     r_heart3 /= "0000" or g_heart3 /= "0000" or b_heart3 /= "0000" or
-    r_mode /= "0000" or g_mode /= "0000" or b_mode /= "0000"
+    r_mode /= "0000" or g_mode /= "0000" or b_mode /= "0000" or 
+    red_in = "1111" or green_in = "1111" or blue_in = "1111"
 ) else '0';
-
-
-
 
 END a;
 

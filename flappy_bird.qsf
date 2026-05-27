@@ -263,6 +263,10 @@ set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_RO
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_global_assignment -name VHDL_FILE "vga-display/pipe.vhd"
+set_global_assignment -name VHDL_FILE "vga-display/lfsr.vhd"
+set_global_assignment -name VHDL_FILE "vga-display/collision.vhd"
+set_global_assignment -name VHDL_FILE "vga-display/bouncy_ball.vhd"
 set_global_assignment -name VHDL_FILE screens/gameover_screen.vhdl
 set_global_assignment -name VHDL_FILE screens/pause_screen.vhdl
 set_global_assignment -name VHDL_FILE sprites/heart.vhdl

@@ -173,7 +173,7 @@ begin
       game_mode => game_mode,
       reset => game_reset,
       pause => game_pause,
-      player_dead => '1'
+      player_dead => '0' --testing
   );
 
   -- START SCREEN
@@ -198,6 +198,7 @@ begin
   -- Game play screen
 GAME_PLAY_SCREEN : entity work.gameplay_screen
     port map (
+    vert_sync => vs,
     pixel_row => pixel_row,
     pixel_column => pixel_column,
     clock_25Mhz => CLOCK_25,
@@ -205,6 +206,7 @@ GAME_PLAY_SCREEN : entity work.gameplay_screen
     score => 0,
     level => 1,
     lives => 3,
+    left_click => left_click,
     video_on => game_video_on ,
     red_out => r_game,
     green_out => g_game,
