@@ -7,7 +7,7 @@ use work.text_pkg.all;
 
 entity flappy_bird is
   port (
-    push_button_1, push_button_2, CLOCK_50  : in  std_logic;
+    push_button_1, push_button_2, CLOCK_50: in  std_logic;
     LEDR      : out std_logic_vector(9 downto 0);
     HEX3, HEX2, HEX1, HEX0  : out std_logic_vector(6 downto 0);
     PS2_CLK, PS2_DAT  : inout std_logic;
@@ -62,10 +62,12 @@ architecture hw_interface of flappy_bird is
   --Signals for ball
   signal ball_on, ball_r, ball_g, ball_b : std_logic;
   signal ball_enable: std_logic:= '1';
-  signal ball_y_pos, size				: std_logic_vector(9 DOWNTO 0);
+  signal size				: std_logic_vector(9 DOWNTO 0);
 
   --Signals for collision
   SIGNAL collision				: std_logic:= '0';
+  SIGNAL pipe_x_pos, ball_x_pos : std_logic_vector(10 downto 0);
+  SIGNAL pipe_y_pos, ball_y_pos : std_logic_vector(9 DOWNTO 0);
   
   --Signals for pipe
   signal pipe_r, pipe_g, pipe_b, 
@@ -75,6 +77,7 @@ architecture hw_interface of flappy_bird is
   signal pipe_start: std_logic := '1';
   signal pipe1_x_pos, pipe2_x_pos, pipe3_x_pos: std_logic_vector(10 downto 0);
   signal pipe1_y_pos, pipe2_y_pos, pipe3_y_pos: std_logic_vector(9 downto 0);
+  
   
   --Signals for lfsr
   signal randomiser_value : std_logic_vector (7 downto 0);
@@ -109,6 +112,7 @@ begin
           ball_on_out => ball_on, 
 			 red => ball_r, green => ball_g, blue => ball_b,
 			 ball_y_pos => ball_y_pos,
+       ball_x_pos => ball_x_pos,
 			 size => size);
     
     --LFSR for random pipe gap position
@@ -155,11 +159,15 @@ begin
     
 
   COLLISION_COMPONENT: entity work.collision
-  PORT MAP (
-        vert_sync => vs, 
+  PORT MAP (clk => CLOCK_25,
+        vert_sync => vs,
+		  ball_on => ball_on,
+		  pipe_on => pipe_on,
         ball_y_pos => ball_y_pos,
-		  ball_size => size,
-        collision => collision);
+        ball_size => size,
+        collision => collision,
+		  pipe_start => pipe_start,
+		  ball_enable => ball_enable);
 
     -- For text display 
     -- 1. A instance of VGA_SYNC to generate the sync signals and pixel coordinates
@@ -229,15 +237,9 @@ begin
   
   pipe_enable <= pipe1_enable or pipe2_enable or pipe3_enable;
   
-  -- Collision logic
-  pipe_start <= '0' when collision = '1'
-						  else 
-					 '1';
 
-  ball_enable <= '0' when collision = '1'
-						  else 
-					 '1';
-					 
+LEDR(0) <= ball_on and pipe_on;
+LEDR(1) <= collision;	 
   
 
   -- Scale from switchs
@@ -261,7 +263,7 @@ begin
   VGA_VS <= vs;
     
 	-- TEst
-	LEDR <= (others => left_click);
+	--LEDR <= (others => left_click);
 	hard_reset <= '0';
  
   

@@ -10,7 +10,8 @@ ENTITY bouncy_ball IS
 		( enable, click, pb1, pb2, clk, vert_sync	: IN std_logic;
           pixel_row, pixel_column	: IN std_logic_vector(9 DOWNTO 0);
 		  ball_on_out, red, green, blue: OUT std_logic;
-		  ball_y_pos, size: OUT std_logic_vector(9 DOWNTO 0));		
+		  ball_y_pos, size: OUT std_logic_vector(9 DOWNTO 0);
+		  ball_x_pos: OUT std_logic_vector(10 DOWNTO 0));		
 END bouncy_ball;
 
 architecture behavior of bouncy_ball is
@@ -19,19 +20,15 @@ SIGNAL ball_on, ball_white: std_logic;
 SIGNAL prev_click, ball_collision: std_logic := '0';
 SIGNAL size_temp 					: std_logic_vector(9 DOWNTO 0);  
 SIGNAL ball_y_pos_temp				: std_logic_vector(9 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(479 - 8, 10);
-SIGNAL ball_x_pos				: std_logic_vector(10 DOWNTO 0);
-
+SIGNAL ball_x_pos_temp				: std_logic_vector(10 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(400, 11);
 
 BEGIN           
 
 size_temp <= CONV_STD_LOGIC_VECTOR(8,10); -- ball radius is 8 pixels
 
--- ball_x_pos and ball_y_pos show the (x,y) for the centre of ball
-ball_x_pos <= CONV_STD_LOGIC_VECTOR(400,11);
-
 -- Determine the pixels where the ball should be drawn 
-ball_on <= '1' when ( ('0' & ball_x_pos <= '0' & pixel_column + size_temp) 
-							and ('0' & pixel_column <= '0' & ball_x_pos + size_temp) 	-- x_pos - size <= pixel_column <= x_pos + size
+ball_on <= '1' when ( ('0' & ball_x_pos_temp <= '0' & pixel_column + size_temp) 
+							and ('0' & pixel_column <= '0' & ball_x_pos_temp + size_temp) 	-- x_pos - size <= pixel_column <= x_pos + size
 							and ('0' & ball_y_pos_temp <= pixel_row + size_temp) 
 							and ('0' & pixel_row <= ball_y_pos_temp + size_temp) )  
 					else	-- y_pos - size <= pixel_row <= y_pos + size
@@ -107,7 +104,9 @@ end process Move_Ball;
 
 --Output signal assignments
 ball_y_pos <= ball_y_pos_temp;
+ball_x_pos <= ball_x_pos_temp;
 size <= size_temp;
+
 
 END behavior;
 
