@@ -86,7 +86,9 @@ architecture hw_interface of flappy_bird is
 
   -- Gated the mouse clicks
 
-  signal gated_start_clicked : std_logic;
+ signal gate_left_click  : std_logic;
+signal gate_start_click : std_logic;
+
 
 
 
@@ -167,8 +169,10 @@ begin
 
 
   -- Button/Switch controls
-  gated_start_clicked <= start_clicked when state = START_MENU else '0';
-  PLAY <= not KEY(0) or gated_start_clicked;  
+  -- assignments
+  gate_left_click  <= left_click when state = PLAY_GAME else '0';
+  gate_start_click <= left_click when state = START_MENU else '0';
+  PLAY <= not KEY(0) or gate_start_click;
   RESTART <= not KEY(1);
   MODE <= SW(0);
 
@@ -216,7 +220,7 @@ GAME_PLAY_SCREEN : entity work.gameplay_screen
     score => current_score,
     level => current_level,
     lives => current_lives,
-    high_score => is_high_score,
+    is_high_score => is_high_score,
     left_click => gate_left_click,
     video_on => game_video_on,
     red_out => r_game,

@@ -4,6 +4,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.text_pkg.all;
 
+--TO DO FIX WITH FSM RESET .
 
 
 ENTITY GAMEPLAY_SCREEN IS
