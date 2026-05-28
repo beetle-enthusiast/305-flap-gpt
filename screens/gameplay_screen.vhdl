@@ -90,7 +90,7 @@ signal r_mode,g_mode,b_mode : std_logic_vector(3 downto 0 );
 signal pipe2_start, pipe3_start,
        pipe_on, pipe1_on, pipe2_on, pipe3_on,
        pipe_enable, pipe1_enable, pipe2_enable, pipe3_enable : std_logic;
-  signal pipe_start: std_logic;
+  signal pipe_start, pipe_passed: std_logic;
   signal pipe1_x_pos, pipe2_x_pos, pipe3_x_pos: std_logic_vector(10 downto 0);
   signal pipe1_y_pos, pipe2_y_pos, pipe3_y_pos: std_logic_vector(9 downto 0);
 
@@ -123,7 +123,6 @@ begin
       points => points,
       scroll_speed => scroll_speed
     );
-		score <= points;
 
     bird_bc_enable <= '1';
 		pipe_start  <= '1';
@@ -311,7 +310,8 @@ HEART3 : entity work.heart
 				  pipe_x_pos => pipe1_x_pos,
 				  pipe_y_pos => pipe1_y_pos,
 				  pipe_on => pipe1_on,
-				  pipe_enable => pipe1_enable);
+				  pipe_enable => pipe1_enable,
+                  pipe_passed => pipe_passed);
 				  
 	PIPE2_COMPONENT: entity work.pipe
     PORT MAP (enable => pipe_start,
@@ -327,7 +327,9 @@ HEART3 : entity work.heart
 				  pipe_x_pos => pipe2_x_pos,
 				  pipe_y_pos => pipe2_y_pos,
 				  pipe_on => pipe2_on,
-				  pipe_enable => pipe2_enable);
+				  pipe_enable => pipe2_enable,
+                  pipe_passed => pipe_passed
+                  );
 				  
 	PIPE3_COMPONENT: entity work.pipe
     PORT MAP (enable => pipe_start,
@@ -343,7 +345,8 @@ HEART3 : entity work.heart
 				  pipe_x_pos => pipe3_x_pos,
 				  pipe_y_pos => pipe3_y_pos,
 				  pipe_on => pipe3_on,
-				  pipe_enable => pipe3_enable);
+				  pipe_enable => pipe3_enable,
+                  pipe_passed => pipe_passed);
     
 
   COLLISION_COMPONENT: entity work.collision
@@ -354,9 +357,15 @@ HEART3 : entity work.heart
         bird_bc_y_pos => bird_bc_y_pos,
         bird_bc_size => size,
         collision => collision
-		--   pipe_start => pipe_start,
-		--   bird_bc_enable => bird_bc_enable
     );
+
+    POINTS_COMPONENT: entity work.points
+    PORT MAP (vert_sync => vert_sync,
+        pipe_passed => pipe_passed,
+        coffee_hit => '0', -- For now, will implement later
+        total_points => points
+    );
+	
 
 -- ADDITIONAL COMPOENNETS END
 -- 1. box and mode signals

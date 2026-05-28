@@ -35,20 +35,18 @@ ARCHITECTURE a OF VGA_TEXT IS
     );
 END COMPONENT char_rom;
 
-    -- SIGNAL character_address : STD_LOGIC_VECTOR(5 DOWNTO 0);
-    -- SIGNAL font_row, font_col : STD_LOGIC_VECTOR(2 DOWNTO 0);
-    SIGNAL rom_mux_output : STD_LOGIC;
-
-
+ 
+SIGNAL rom_mux_output : STD_LOGIC;
 SIGNAL character_address_reg : STD_LOGIC_VECTOR(5 DOWNTO 0);
 SIGNAL font_row_reg, font_col_reg : STD_LOGIC_VECTOR(2 DOWNTO 0);
 SIGNAL text_on : STD_LOGIC;
 SIGNAL text_r_reg, text_g_reg, text_b_reg : STD_LOGIC_VECTOR(3 DOWNTO 0);
+SIGNAL col_offset_reg  : INTEGER;
+SIGNAL row_offset_reg : INTEGER;
+SIGNAL in_bounds_reg : STD_LOGIC;
 
   
 begin
-
-
 
     -- Create an instance of the char_rom component
     char_rom_inst : char_rom
@@ -60,54 +58,100 @@ begin
         rom_mux_output => rom_mux_output
     );
 
--- Compute address
+-- bounds, reg offsets
 Stage1 : process(clock_25Mhz)
+    variable in_text_area : boolean;
+    variable msg_len      : integer;
+    variable text_width   : integer;
+    variable text_height  : integer;
+begin
+    if rising_edge(clock_25Mhz) then
+        in_text_area  := false;
+        in_bounds_reg <= '0';
+        msg_len       := message'length;
 
-    variable col_offset : INTEGER;
-    variable row_offset : INTEGER;
-    variable active_len :INTEGER;
+        case scale is
+            when 1 =>
+                text_width := to_integer( unsigned(to_unsigned(msg_len, 16)) sll 3 );
+                text_height := 8;
+            when 2 =>
+                text_width := to_integer( unsigned(to_unsigned(msg_len, 16)) sll 4 );
+                text_height := 16;
+            when 4 =>
+                text_width := to_integer( unsigned(to_unsigned(msg_len, 16)) sll 5 );
+                text_height := 32;
+            when others =>
+                text_width := to_integer( unsigned(to_unsigned(msg_len, 16)) sll 3);
+                text_height := 8;
+        end case;
+
+        in_text_area :=
+            unsigned(pixel_row)    >= start_row and
+            unsigned(pixel_row)    <  start_row + text_height and
+            unsigned(pixel_column) >= start_col and
+            unsigned(pixel_column) <  start_col + text_width;
+
+        if in_text_area then
+            col_offset_reg <= to_integer(unsigned(pixel_column)) - start_col;
+            row_offset_reg <= to_integer(unsigned(pixel_row))    - start_row;
+            in_bounds_reg  <= '1';
+        end if;
+    end if;
+end process;
+-- Char address and font row/col 
+Stage_2: process(clock_25Mhz)
+    variable scaled_col : INTEGER;
+    variable scaled_row : INTEGER;
     variable char_index : INTEGER;
-begin 
-    if rising_edge(clock_25Mhz) then 
 
-        --DEFAULTS
-        character_address_reg <= ( others=> '0');
-        font_row_reg <= (others => '0');
-        font_col_reg <= (others => '0');
-        text_on <= '0';
-        text_r_reg <= text_r;
-        text_g_reg <= text_g;
-        text_b_reg <= text_b;
+    begin 
+        if rising_edge(clock_25Mhz) then 
+            character_address_reg <= ( others=> '0');
+            font_row_reg <= (others => '0');
+            font_col_reg <= (others => '0');
+            text_on <= '0';
+            text_r_reg <= text_r;
+            text_g_reg <= text_g;
+            text_b_reg <= text_b;
 
-        active_len := message'length;
+            if in_bounds_reg = '1' then 
+                case scale is 
+                    when 1 =>
+                        scaled_col := col_offset_reg;
+                        scaled_row := row_offset_reg;
+                        char_index := to_integer( unsigned(to_unsigned(col_offset_reg, 16)) srl 3 ) + 1;
+                    when 2 =>
+                    scaled_col := to_integer(unsigned(to_unsigned(col_offset_reg, 16)) srl 1); 
+                    scaled_row := to_integer(unsigned(to_unsigned(row_offset_reg, 16)) srl 1);
+                    char_index := to_integer( unsigned(to_unsigned(col_offset_reg, 16)) srl 4) + 1;
+                    when 4 =>
+                    scaled_col := to_integer(unsigned(to_unsigned(col_offset_reg, 16)) srl 2); 
+                    scaled_row := to_integer(unsigned(to_unsigned(row_offset_reg, 16)) srl 2);
+                    char_index := to_integer( unsigned(to_unsigned(col_offset_reg, 16)) srl 5 ) + 1;
+                   when others =>
+                    scaled_col := col_offset_reg;
+                    scaled_row := row_offset_reg;
+                    char_index := to_integer(unsigned(to_unsigned(col_offset_reg, 16)) srl 3) + 1;
 
+                end case;
 
-        
+                font_row_reg <= std_logic_vector(to_unsigned(scaled_row, 3));
+                font_col_reg <= std_logic_vector(to_unsigned(scaled_col mod 8, 3));
 
-        if active_len > 0 and scale > 0 then
-            if unsigned(pixel_row) >= start_row and
-               unsigned(pixel_row) < start_row + (8 * scale) and
-               unsigned(pixel_column) >= start_col and
-               unsigned(pixel_column) < start_col + (active_len * 8 * scale) then
-
-                col_offset := to_integer(unsigned(pixel_column)) - start_col;
-                row_offset := to_integer(unsigned(pixel_row)) - start_row;
-                char_index := (col_offset / (8 * scale)) + 1;
-
-                if char_index >= 1 and char_index <= active_len then
+                 if char_index >= 1 and char_index <= message'length then
                     character_address_reg <= std_logic_vector(
                         to_unsigned(character'pos(message(char_index)), 6));
                 end if;
 
-                font_row_reg <= std_logic_vector(to_unsigned(row_offset / scale, 3));
-                font_col_reg <= std_logic_vector(to_unsigned((col_offset / scale) mod 8, 3));
                 text_on <= '1';
             end if;
         end if;
-    end if;
-end process;
+    end process;
 
-Stage2 : process(clock_25Mhz)
+
+   
+
+Stage3 : process(clock_25Mhz)
 begin
     if rising_edge(clock_25Mhz) then 
         if text_on = '1' and rom_mux_output = '1' then

@@ -11,7 +11,7 @@ ENTITY pipe IS
 		pipe_x_pos: OUT std_logic_vector(10 DOWNTO 0);
 		pipe_y_pos: OUT std_logic_vector(9 DOWNTO 0);
 		pipe_r,pipe_b,pipe_g : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
-		pipe_on, pipe_enable: OUT std_logic);		
+		pipe_on, pipe_enable, pipe_passed: OUT std_logic);		
 END pipe;
 
 architecture behavior of pipe is
@@ -105,6 +105,13 @@ begin
 				pipe_gap_pos    <= to_unsigned(100, 10) + unsigned("00" & randomiser_value1);
 			else
 				pipe_x_temp_pos <= unsigned(signed(pipe_x_temp_pos) + pipe_x_motion);
+			end if;
+
+			--Detect if ball passed pipe
+			if (pipe_x_temp_pos < to_unsigned(200 - 8, 11)) then
+				pipe_passed <= '1';
+			else
+				pipe_passed <= '0';
 			end if;
 		end if;
 	end if;
