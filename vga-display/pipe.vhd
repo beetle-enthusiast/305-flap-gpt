@@ -20,7 +20,7 @@ ARCHITECTURE behavior OF pipe IS
 
     SIGNAL pipe_gap_on        : std_logic;
     SIGNAL pipe_width_radius  : unsigned(10 DOWNTO 0) := to_unsigned(10, 11);   -- width = 20
-    SIGNAL pipe_height_radius : unsigned(9 DOWNTO 0)  := to_unsigned(200, 10);  -- height = 400
+    SIGNAL pipe_height_radius : unsigned(9 DOWNTO 0)  := to_unsigned((479-55)/2, 10);  -- height = from banner to down
     SIGNAL gap_constant       : unsigned(9 DOWNTO 0)  := to_unsigned(50, 10);
 
     SIGNAL pipe_x_temp_pos    : unsigned(10 DOWNTO 0) := to_unsigned(639, 11);

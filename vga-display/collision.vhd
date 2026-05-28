@@ -5,16 +5,16 @@ USE IEEE.NUMERIC_STD.ALL;
 ENTITY collision IS
     PORT (
         clk, vert_sync      : IN std_logic;
-        ball_on, pipe_on    : IN std_logic;
-        ball_y_pos, ball_size : IN std_logic_vector(9 DOWNTO 0);
-        collision           : OUT std_logic;
-        pipe_start, ball_enable : OUT std_logic
+        bird_on, pipe_on    : IN std_logic;
+        bird_y_pos, bird_size : IN std_logic_vector(9 DOWNTO 0);
+        collision, death           : OUT std_logic;
+        pipe_start, bird_enable : OUT std_logic
     );
 END collision;
 
 ARCHITECTURE behavior OF collision IS
 
-    SIGNAL collision_temp            : std_logic := '0';
+    SIGNAL death_temp, collision_temp            : std_logic := '0';
     SIGNAL collision_reset           : std_logic := '0';
     SIGNAL reset                     : std_logic := '0';  -- external reset not wired yet
     SIGNAL collision_per_frame       : std_logic := '0';
@@ -35,16 +35,15 @@ BEGIN
                 IF collision_reset = '1' THEN
                     collision_temp <= '0';
 
-                -- hit ceiling or pipe
-                ELSIF (unsigned(ball_y_pos) <= unsigned(ball_size)) OR
-                      (ball_on = '1' AND pipe_on = '1') THEN
+                -- hit ceiling or pipe = lose a life
+                ELSIF ((unsigned(bird_y_pos) <= unsigned(bird_size)) OR
+                      (bird_on = '1' AND pipe_on = '1')) THEN
                     collision_temp <= '1';
 
-                -- hit bottom
-                ELSIF unsigned(ball_y_pos) >=
-                      (to_unsigned(479, 10) - unsigned(ball_size)) THEN
-                    -- TODO: treat as death if needed
-                    collision_temp <= '0';
+                -- hit bottom = death = game over
+                ELSIF unsigned(bird_y_pos) >=
+                      (to_unsigned(479, 10) - unsigned(bird_size)) THEN
+                    death_temp <= '1';
                 END IF;
 
                 -- generate one-cycle reset pulse when collision_per_frame rises
@@ -70,17 +69,17 @@ BEGIN
             IF reset = '1' THEN
                 collision_per_frame <= '0';
                 pipe_start          <= '1';
-                ball_enable         <= '1';
+                bird_enable         <= '1';
 
             ELSE
                 collision_per_frame <= collision_temp;
 
                 IF collision_temp = '1' THEN
                     pipe_start  <= '0';
-                    ball_enable <= '0';
+                    bird_enable <= '0';
                 ELSE
                     pipe_start  <= '1';
-                    ball_enable <= '1';
+                    bird_enable <= '1';
                 END IF;
 
             END IF;
@@ -90,5 +89,6 @@ BEGIN
 
     -- Output
     collision <= collision_temp;
+	 death <= death_temp;
 
 END behavior;
