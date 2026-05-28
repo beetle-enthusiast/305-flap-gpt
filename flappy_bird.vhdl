@@ -91,6 +91,9 @@ architecture hw_interface of flappy_bird is
  signal gate_left_click  : std_logic;
 signal gate_start_click : std_logic;
 
+--TEST
+signal bean_on: std_logic;
+
 
 
 
@@ -229,6 +232,7 @@ GAME_PLAY_SCREEN : entity work.gameplay_screen
     player_dead => player_dead,
     left_click => gate_left_click,
     video_on => game_video_on,
+	 bean_on => bean_on,
     red_out => r_game,
     green_out => g_game,
     blue_out => b_game
@@ -273,48 +277,48 @@ GAME_PLAY_SCREEN : entity work.gameplay_screen
 
 
 
-  -- VGA background assignment
-red_in <= cursor_r when cursor_on = '1' else
-          start_r when state = START_MENU and start_video_on = '1' else
-          bg_r when state = START_MENU else
-          r_game when state = PLAY_GAME and game_video_on = '1' else
-          bg_r when state = PLAY_GAME else
-          r_pause when state = PAUSE_GAME and pause_video_on = '1' else
-          r_game when state = PAUSE_GAME and game_video_on = '1' else
-          bg_r when state = PAUSE_GAME else
-          r_gameover when state = GAME_OVER and gameover_video_on = '1' else 
-          bg_r when STATE = GAME_OVER else
-          bg_r;
-
-green_in <= cursor_g when cursor_on = '1' else
-            start_g when state = START_MENU and start_video_on = '1' else
-            bg_g when state = START_MENU else
-            g_game when state = PLAY_GAME and game_video_on = '1' else
-            bg_g when state = PLAY_GAME else
-            g_pause when state = PAUSE_GAME and pause_video_on = '1' else
-            g_game when state = PAUSE_GAME and game_video_on = '1' else
-            bg_g when state = PAUSE_GAME else
-            g_gameover when state = GAME_OVER and gameover_video_on = '1' else 
-            bg_g when STATE = GAME_OVER else
-            bg_g;
-
-blue_in <= cursor_b when cursor_on = '1' else
-           start_b when state = START_MENU and start_video_on = '1' else
-           bg_b when state = START_MENU else
-           b_game when state = PLAY_GAME and game_video_on = '1' else
-           bg_b when state = PLAY_GAME else
-           b_pause when state = PAUSE_GAME and pause_video_on = '1' else
-            b_game when state = PAUSE_GAME and game_video_on = '1' else
-          bg_b when state = PAUSE_GAME else
-
-           b_gameover when state = GAME_OVER and gameover_video_on = '1' else 
-           bg_b when STATE = GAME_OVER else
-			  bg_b;
+--  -- VGA background assignment
+--red_in <= cursor_r when cursor_on = '1' else
+--          start_r when state = START_MENU and start_video_on = '1' else
+--          bg_r when state = START_MENU else
+--          r_game when state = PLAY_GAME and game_video_on = '1' else
+--          bg_r when state = PLAY_GAME else
+--          r_pause when state = PAUSE_GAME and pause_video_on = '1' else
+--          r_game when state = PAUSE_GAME and game_video_on = '1' else
+--          bg_r when state = PAUSE_GAME else
+--          r_gameover when state = GAME_OVER and gameover_video_on = '1' else 
+--          bg_r when STATE = GAME_OVER else
+--          bg_r;
+--
+--green_in <= cursor_g when cursor_on = '1' else
+--            start_g when state = START_MENU and start_video_on = '1' else
+--            bg_g when state = START_MENU else
+--            g_game when state = PLAY_GAME and game_video_on = '1' else
+--            bg_g when state = PLAY_GAME else
+--            g_pause when state = PAUSE_GAME and pause_video_on = '1' else
+--            g_game when state = PAUSE_GAME and game_video_on = '1' else
+--            bg_g when state = PAUSE_GAME else
+--            g_gameover when state = GAME_OVER and gameover_video_on = '1' else 
+--            bg_g when STATE = GAME_OVER else
+--            bg_g;
+--
+--blue_in <= cursor_b when cursor_on = '1' else
+--           start_b when state = START_MENU and start_video_on = '1' else
+--           bg_b when state = START_MENU else
+--           b_game when state = PLAY_GAME and game_video_on = '1' else
+--           bg_b when state = PLAY_GAME else
+--           b_pause when state = PAUSE_GAME and pause_video_on = '1' else
+--            b_game when state = PAUSE_GAME and game_video_on = '1' else
+--          bg_b when state = PAUSE_GAME else
+--
+--           b_gameover when state = GAME_OVER and gameover_video_on = '1' else 
+--           bg_b when STATE = GAME_OVER else
+--			  bg_b;
 
   -- VGA driver assignment
-  VGA_R <= red_sig;
-  VGA_G <= green_sig;
-  VGA_B <= blue_sig;
+  VGA_R <= r_game;
+  VGA_G <= g_game;
+  VGA_B <= b_game;
 
   VGA_HS <= hs;
   VGA_VS <= vs;
@@ -323,9 +327,12 @@ blue_in <= cursor_b when cursor_on = '1' else
   
 
   -- For testing
-  LEDR(1) <=  '1' when game_pause = '1'
-              else '0';
-  LEDR(0) <=  '1' when game_reset = '1'
-              else '0';
+--  LEDR(1) <=  '1' when game_pause = '1'
+--              else '0';
+--  LEDR(0) <=  '1' when game_reset = '1'
+--              else '0';
+
+-- DEBUGGING PURPOSES
+LEDR(0) <= bean_on;
 
   end architecture;

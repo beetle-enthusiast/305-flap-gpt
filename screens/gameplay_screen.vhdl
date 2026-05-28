@@ -22,6 +22,7 @@ ENTITY GAMEPLAY_SCREEN IS
         level : out integer range 1 to 3;
         lives : out integer range 0 to 3;
         video_on : OUT STD_LOGIC;
+		  bean_on: OUT STD_LOGIC; -- temp
         red_out, green_out, blue_out : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
     );
 END GAMEPLAY_SCREEN;
@@ -96,7 +97,15 @@ signal pipe3_r, pipe3_g, pipe3_b : std_logic_vector(3 downto 0);
 signal pipe_r, pipe_g, pipe_b    : std_logic_vector(3 downto 0);
   
   --Signals for lfsr
-  signal randomiser_value : std_logic_vector (7 downto 0);
+  signal randomiser_value1 : std_logic_vector (7 downto 0);
+  signal randomiser_value2 : std_logic_vector (7 downto 0);
+
+  --Signals for coffee bean
+  signal bean_r, bean_g, bean_b : std_logic_vector(3 downto 0);
+  SIGNAL bean_x_pos: std_logic_vector(10 DOWNTO 0);
+  SIGNAL bean_y_pos: std_logic_vector(9 DOWNTO 0);
+  SIGNAL bean_enable: std_logic;	
+  SIGNAL bean_on_temp: std_logic; -- FOR TESTING
 -- SIGNALS ADDED ENDS
 
 begin
@@ -282,7 +291,8 @@ HEART3 : entity work.heart
     LFSR_COMPONENT: entity work.lfsr
     PORT MAP (clk => clock_25Mhz, 
             enable => pipe_enable, 
-            random_value => randomiser_value);
+            random_value1 => randomiser_value1,
+				random_value2 => randomiser_value2);
 
     -- For pipe movement
     -- Instantiate PIPE component
@@ -296,7 +306,7 @@ HEART3 : entity work.heart
 				  start=> '1', 
 				  pixel_row => pixel_row, 
 				  pixel_column => pixel_column,
-                  randomiser_value => randomiser_value,
+                  randomiser_value1 => randomiser_value1,
 				  pipe_x_pos => pipe1_x_pos,
 				  pipe_y_pos => pipe1_y_pos,
 				  pipe_on => pipe1_on,
@@ -312,7 +322,7 @@ HEART3 : entity work.heart
                   pipe_b => pipe2_b,
 				  pixel_row => pixel_row, 
 				  pixel_column => pixel_column,
-                  randomiser_value => randomiser_value,
+                  randomiser_value1 => randomiser_value1,
 				  pipe_x_pos => pipe2_x_pos,
 				  pipe_y_pos => pipe2_y_pos,
 				  pipe_on => pipe2_on,
@@ -328,7 +338,7 @@ HEART3 : entity work.heart
                   pipe_b => pipe3_b,
 				  pixel_row => pixel_row, 
 				  pixel_column => pixel_column,
-                  randomiser_value => randomiser_value,
+                  randomiser_value1 => randomiser_value1,
 				  pipe_x_pos => pipe3_x_pos,
 				  pipe_y_pos => pipe3_y_pos,
 				  pipe_on => pipe3_on,
@@ -347,11 +357,28 @@ HEART3 : entity work.heart
 		--   ball_enable => ball_enable
         );
 
+    COFFEE_BEAN_COMPONENT: entity work.coffee_beans
+    PORT MAP (enable => pipe_start, 
+                  vert_sync => vert_sync, 
+                  start=> '1', 
+                  pixel_row => pixel_row, 
+                  pixel_column => pixel_column,
+						randomiser_value_y => randomiser_value2,
+						bean_r => bean_r,
+						bean_g => bean_g,
+						bean_b => bean_b,
+                  bean_x_pos => bean_x_pos,
+                  bean_y_pos => bean_y_pos,
+                  bean_on => bean_on_temp,
+                  bean_enable => bean_enable);
+
 -- ADDITIONAL COMPOENNETS END
 
 pipe_r <= pipe1_r or pipe2_r or pipe3_r;
 pipe_g <= pipe1_g or pipe2_g or pipe3_g;
 pipe_b <= pipe1_b or pipe2_b or pipe3_b;
+
+
 
 
   -- Pipe logic
@@ -366,12 +393,6 @@ pipe_b <= pipe1_b or pipe2_b or pipe3_b;
   pipe_on <= pipe1_on or pipe2_on or pipe3_on;
   
   pipe_enable <= pipe1_enable or pipe2_enable or pipe3_enable;
-  	 
-
-
-
-
-
 
 
 
@@ -384,22 +405,31 @@ red_in   <= pipe_r when pipe_on = '1' else ball_r when ball_on = '1' else "0000"
 green_in <= pipe_g when pipe_on = '1' else ball_g when ball_on = '1' else "0000";
 blue_in  <= pipe_b when pipe_on = '1' else ball_b when ball_on = '1' else "0000";
 
-red_out   <= box_r or r_score or r_level or r_heart1 or r_heart2 or r_heart3 or r_mode when box_on = '1' else red_in;
-green_out <= box_g or g_score or g_level or g_heart1 or g_heart2 or g_heart3 or g_mode when box_on = '1' else green_in;
-blue_out  <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or b_mode when box_on = '1' else blue_in;
+--red_out   <= box_r or r_score or r_level or r_heart1 or r_heart2 or r_heart3 or bean_r or r_mode when box_on = '1' else red_in;
+--green_out <= box_g or g_score or g_level or g_heart1 or g_heart2 or g_heart3 or bean_g or g_mode when box_on = '1' else green_in;
+--blue_out  <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or bean_b or b_mode when box_on = '1' else blue_in;
+red_out   <= "0000" when bean_on_temp = '1' else "1111";
+green_out <= "1111" when bean_on_temp = '1' else "0000";
+blue_out  <= "0000";
 
-  video_on <= '1' when (
-    box_on = '1' or
-    pipe_on = '1' or
-    ball_on = '1' or
-    r_score /= "0000" or g_score /= "0000" or b_score /= "0000" or
-    r_level /= "0000" or g_level /= "0000" or b_level /= "0000" or
-    r_heart1 /= "0000" or g_heart1 /= "0000" or b_heart1 /= "0000" or
-    r_heart2 /= "0000" or g_heart2 /= "0000" or b_heart2 /= "0000" or
-    r_heart3 /= "0000" or g_heart3 /= "0000" or b_heart3 /= "0000" or
-    r_mode /= "0000" or g_mode /= "0000" or b_mode /= "0000" 
-) else '0';
+video_on <= '1';
 
+--  video_on <= '1' when (
+--    box_on = '1' or
+--    pipe_on = '1' or
+--    ball_on = '1' or
+--    r_score /= "0000" or g_score /= "0000" or b_score /= "0000" or
+--    r_level /= "0000" or g_level /= "0000" or b_level /= "0000" or
+--    r_heart1 /= "0000" or g_heart1 /= "0000" or b_heart1 /= "0000" or
+--    r_heart2 /= "0000" or g_heart2 /= "0000" or b_heart2 /= "0000" or
+--    r_heart3 /= "0000" or g_heart3 /= "0000" or b_heart3 /= "0000" or
+--    r_mode /= "0000" or g_mode /= "0000" or b_mode /= "0000" 
+--) else '0';
+
+
+--TESTING
+
+bean_on <= bean_on_temp;
 END a;
 
 
