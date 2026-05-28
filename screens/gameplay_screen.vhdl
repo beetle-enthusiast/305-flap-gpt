@@ -75,17 +75,17 @@ signal r_mode,g_mode,b_mode : std_logic_vector(3 downto 0 );
 --SIGNALS ADDED
   signal red_in, green_in, blue_in : std_logic_vector (3 downto 0);
 
---Signals for ball
-  signal ball_r, ball_g, ball_b : std_logic_vector (3 downto 0);
-  SIGNAL ball_on : std_logic;
-  signal ball_enable: std_logic;
+--Signals for bird
+  signal bird_r, bird_g, bird_b : std_logic_vector (3 downto 0);
+  SIGNAL bird_on : std_logic;
+  signal bird_enable: std_logic;
   signal size				: std_logic_vector(9 DOWNTO 0);
 
   --Signals for collision
   SIGNAL collision				: std_logic:= '0';
   SIGNAL pipe_x_pos, ball_x_pos : std_logic_vector(10 downto 0);
   SIGNAL pipe_y_pos, ball_y_pos : std_logic_vector(9 DOWNTO 0);
-  
+
   --Signals for pipe
 signal pipe2_start, pipe3_start,
        pipe_on, pipe1_on, pipe2_on, pipe3_on,
@@ -101,7 +101,18 @@ signal pipe_r, pipe_g, pipe_b    : std_logic_vector(3 downto 0);
   
   --Signals for lfsr
   signal randomiser_value1 : std_logic_vector (7 downto 0);
-signal randomiser_value2 : std_logic_vector (7 downto 0);
+  signal randomiser_value2 : std_logic_vector (7 downto 0);
+
+  --Signals for coffee bean
+  SIGNAL bean_r, bean_g, bean_b : std_logic_vector(3 downto 0);
+  SIGNAL bean1_r, bean1_g, bean1_b : std_logic_vector(3 downto 0);
+  SIGNAL bean2_r, bean2_g, bean2_b : std_logic_vector(3 downto 0);
+  SIGNAL bean1_x_pos, bean2_x_pos: std_logic_vector(10 DOWNTO 0);
+  SIGNAL bean1_y_pos, bean2_y_pos: std_logic_vector(9 DOWNTO 0);
+  SIGNAL bean2_start: std_logic;
+  SIGNAL bean_enable, bean1_enable, bean2_enable: std_logic;	
+  SIGNAL bean_on_temp, bean1_on_temp, bean2_on_temp: std_logic; -- FOR TESTING
+
 
 -- SIGNALS ADDED ENDS
 
@@ -407,6 +418,41 @@ begin
     else
       pipe2_start <= '0';
     end if;
+  end if;
+end process;
+
+
+-- bean logic 
+bean_logic : process(clock_25Mhz)
+begin
+  if rising_edge(clock_25Mhz) then
+    bean_r <= bean1_r or bean2_r;
+    bean_g <= bean1_g or bean2_g;
+    bean_b <= bean1_b or bean2_b;
+
+    bean_on <= bean_on_temp;
+
+     -- bean2_start logic
+    if unsigned(bean1_x_pos) <= 425 then
+        bean2_start <= '1';
+    else
+        bean2_start <= '0';
+    end if;
+
+    -- bean_on_temp logic
+    if (bean1_on_temp = '1') or (bean2_on_temp = '1') then
+        bean_on_temp <= '1';
+    else
+        bean_on_temp <= '0';
+    end if;
+
+    -- bean_enable logic
+    if (bean1_enable = '1') or (bean2_enable = '1') then
+        bean_enable <= '1';
+    else
+        bean_enable <= '0';
+    end if;
+
   end if;
 end process;
 
