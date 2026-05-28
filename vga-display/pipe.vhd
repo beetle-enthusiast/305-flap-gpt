@@ -102,9 +102,9 @@ BEGIN
                     -- scroll left by 1
                     pipe_x_temp_pos <= pipe_x_temp_pos - 1;
 
-                    -- passed check: RHS of pipe < bird x (479 - 8)
+                    -- passed check: RHS of pipe < bird x (200 - 8)
                     IF pipe_x_temp_pos + pipe_width_radius <
-                       to_unsigned(479 - 8, 11) THEN
+                       to_unsigned(200 - 8, 11) THEN
                         pipe_passed <= '1';
                     ELSE
                         pipe_passed <= '0';

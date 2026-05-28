@@ -16,13 +16,32 @@ ARCHITECTURE behavior OF collision IS
 
     SIGNAL death_temp, collision_temp            : std_logic := '0';
     SIGNAL collision_reset           : std_logic := '0';
-    SIGNAL reset                     : std_logic := '0';  -- external reset not wired yet
+    SIGNAL reset                     : std_logic := '0';
     SIGNAL collision_per_frame       : std_logic := '0';
     SIGNAL prev_collision_per_frame  : std_logic := '0';
 
+    
+    -- 1‑frame delayed bird_on to fix pipe‑clipping glitch
+    
+    SIGNAL bird_on_delayed, pipe_on_delayed : std_logic := '0';
+
 BEGIN
 
-    -- Collision detection on pixel clock
+    
+    -- Update delayed bird_on once per frame
+    
+    Delay: PROCESS(vert_sync)
+    BEGIN
+        IF rising_edge(vert_sync) THEN
+            bird_on_delayed <= bird_on;
+				pipe_on_delayed <= pipe_on;
+        END IF;
+    END PROCESS Delay;
+
+
+    
+    -- Pixel-clock collision detection 
+    
     Check_Collision : PROCESS(clk)
     BEGIN
         IF rising_edge(clk) THEN
@@ -35,18 +54,22 @@ BEGIN
                 IF collision_reset = '1' THEN
                     collision_temp <= '0';
 
-                -- hit ceiling or pipe = lose a life
-                ELSIF ((unsigned(bird_y_pos) <= unsigned(bird_size)) OR
-                      (bird_on = '1' AND pipe_on = '1')) THEN
+                -- Use bird_on_delayed instead of bird_on to avoid glitches with pipe
+                
+                ELSIF (bird_on_delayed = '1' AND pipe_on_delayed = '1') THEN
                     collision_temp <= '1';
 
-                -- hit bottom = death = game over
+                -- hit ceiling
+                ELSIF (unsigned(bird_y_pos) <= unsigned(bird_size)) THEN
+                    collision_temp <= '1';
+
+                -- hit bottom = death
                 ELSIF unsigned(bird_y_pos) >=
                       (to_unsigned(479, 10) - unsigned(bird_size)) THEN
                     death_temp <= '1';
                 END IF;
 
-                -- generate one-cycle reset pulse when collision_per_frame rises
+                -- existing one-cycle reset pulse logic
                 IF (collision_per_frame = '1' AND prev_collision_per_frame = '0') THEN
                     collision_reset <= '1';
                 ELSE
@@ -55,13 +78,13 @@ BEGIN
 
             END IF;
 
-            -- track previous frame collision state
             prev_collision_per_frame <= collision_per_frame;
 
         END IF;
     END PROCESS Check_Collision;
 
-    -- Frame-based collision handling on vert_sync
+
+    -- Frame-based collision handling 
     Reset_collision : PROCESS(vert_sync)
     BEGIN
         IF rising_edge(vert_sync) THEN
@@ -87,8 +110,7 @@ BEGIN
         END IF;
     END PROCESS Reset_collision;
 
-    -- Output
     collision <= collision_temp;
-	 death <= death_temp;
+    death <= death_temp;
 
 END behavior;

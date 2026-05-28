@@ -41,7 +41,6 @@ BEGIN
 
     -- Movement
     Move_bird : PROCESS(vert_sync)
-		  --VARIABLE started		 : std_logic := '0';
         VARIABLE bird_y_motion : signed(9 DOWNTO 0) := (OTHERS => '0'); -- Velocity of bird
 		  VARIABLE at_top        : std_logic := '0';
         VARIABLE next_y        : signed(9 DOWNTO 0); -- Next y position of bird

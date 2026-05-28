@@ -27,15 +27,18 @@ BEGIN
 bean_size <= to_unsigned(5, 10);
 
 --Colour signals
+
 bean_r <= "0000";
 bean_g <= "1111" when bean_on_temp = '1' else "0000";
 bean_b <= "0000";
+
 
 -- Determine the pixels where the bean should be drawn 				
 bean_on_temp <= '1' when (bean_x_temp_pos <= unsigned(pixel_column) + bean_size AND
 									unsigned(pixel_column) <= bean_x_temp_pos + bean_size AND
 									bean_y_temp_pos <= unsigned(pixel_row) + bean_size AND
-									unsigned(pixel_row) <= bean_y_temp_pos + bean_size) 
+									unsigned(pixel_row) <= bean_y_temp_pos + bean_size AND 
+									pipe_on = '0') 
 						else	
 					'0';
 				
@@ -77,6 +80,5 @@ end process Move_Bean;
 bean_x_pos <= std_logic_vector(bean_x_temp_pos);
 bean_y_pos <= std_logic_vector(bean_y_temp_pos);
 bean_on <= bean_on_temp;
-
 
 END behavior;
