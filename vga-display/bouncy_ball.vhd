@@ -26,6 +26,7 @@ SIGNAL rom_address : std_logic_vector(11 downto 0);
 SIGNAL sprite_on : std_logic;
 SIGNAL row_offset,col_offset : std_logic_vector( 9 downto 0);
 SIGNAL in_sprite_bounds : std_logic;
+SIGNAL in_sprite_bounds_reg : std_logic := '0';
 
 SIGNAL vs_prev : std_logic := '0';
 SIGNAL enable_reg : std_logic := '0';
@@ -33,45 +34,61 @@ SIGNAL enable_reg : std_logic := '0';
 
 BEGIN           
 
-
 -- Rom component
-
-
-
--- Check if current pixel is within the sprite bounding  box
-in_sprite_bounds <= '1' when (
-    unsigned(pixel_row) >= unsigned(ball_y_pos_temp) - 16 and
-    unsigned(pixel_row) <  unsigned(ball_y_pos_temp) + 16 and
-    unsigned(pixel_column) >= unsigned(ball_x_pos_temp(9 downto 0)) - 16 and
-    unsigned(pixel_column) <  unsigned(ball_x_pos_temp(9 downto 0)) + 16
-) else '0';
-
-row_offset <= std_logic_vector(unsigned(pixel_row) - (unsigned(ball_y_pos_temp) - 16));
-col_offset <= std_logic_vector(unsigned(pixel_column) - (unsigned(ball_x_pos_temp(9 downto 0)) - 16));
-
-
-	SPRTIE_ROM : entity work.bird
+SPRTIE_ROM : entity work.bird
     port map(
         address => rom_address,
         clock => clk,
         q => rom_data
     );
 
-rom_address <= (row_offset(4 downto 0) & "0") & (col_offset(4 downto 0) & "0")
-               when in_sprite_bounds = '1'
-               else (others => '0');
-			sprite_on <= '1' when (in_sprite_bounds = '1' and rom_data /= x"000") else '0';
-    ball_on   <= sprite_on;
-	
+Sprite : process(clk) 
+begin 
+	if rising_edge(clk) then 
+		if (unsigned(pixel_row) >= unsigned(ball_y_pos_temp) - 16 and
+    unsigned(pixel_row) <  unsigned(ball_y_pos_temp) + 16 and
+    unsigned(pixel_column) >= unsigned(ball_x_pos_temp(9 downto 0)) - 16 and
+    unsigned(pixel_column) <  unsigned(ball_x_pos_temp(9 downto 0)) + 16) then 
+		in_sprite_bounds <= '1';
+	else 
+		in_sprite_bounds <= '0';
+	end if;
 
-			
--- Colours for pixel data on video signal
+	row_offset <= std_logic_vector(unsigned(pixel_row) - (unsigned(ball_y_pos_temp) - 16));
+	col_offset <= std_logic_vector(unsigned(pixel_column) - (unsigned(ball_x_pos_temp(9 downto 0)) - 16));
 
-	red <= rom_data(11 downto 8) when sprite_on = '1' else "0000";
-    green <= rom_data(7  downto 4) when sprite_on = '1' else "0000";
-    blue  <= rom_data(3  downto 0) when sprite_on = '1' else "0000";
+ 		if (in_sprite_bounds = '1') then 
+			rom_address <= (row_offset(4 downto 0) & "0") & (col_offset(4 downto 0) & "0");
+		else 
+			 rom_address <= (others => '0'); 
+		end if;
 
-ball_on_out <= ball_on;
+		--register address
+		in_sprite_bounds_reg <= in_sprite_bounds;
+		
+		if (in_sprite_bounds_reg = '1' and rom_data /= x"000") then 
+			sprite_on <= '1'; 
+		else 
+		sprite_on <= '0'; 
+		end if;
+		
+
+	if (sprite_on = '1') then 
+		red <=  rom_data(11 downto 8);
+		green <= rom_data(7  downto 4);
+		blue <= rom_data(3  downto 0);
+	else 
+		red <= "0000";
+		green <= "0000";
+		blue <= "0000";
+	end if;
+
+	ball_on <= sprite_on;
+	ball_on_out <= ball_on;
+end if;
+end process;
+
+
 Move_Ball: process (clk) 
 VARIABLE ball_y_motion : signed(9 DOWNTO 0) := (others => '0');
 VARIABLE at_top : std_logic := '0';

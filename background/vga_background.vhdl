@@ -34,17 +34,24 @@ begin
     );
     
 
+    sig_Calc : process(clock_25Mhz) 
+    begin
+    if rising_edge(clock_25Mhz) then 
+      sig <= std_logic_vector(
+            to_unsigned(
+                to_integer(unsigned(pixel_row(8 downto 2))) * 160 
+                + to_integer(unsigned(pixel_column(9 downto 2))), 15)
+        ); 
+		  end if;
+    end process;
 
-    sig <= std_logic_vector(
-    to_unsigned(to_integer(unsigned(pixel_row(8 downto 2))) * 160 
-    + to_integer(unsigned(pixel_column(9 downto 2))), 15)
-);
+    output_reg : process(clock_25Mhz) 
+    begin
+        if rising_edge(clock_25Mhz) then 
+            red_out   <= rom_data(11 downto 8);
+            green_out <= rom_data(7  downto 4);
+            blue_out  <= rom_data(3  downto 0);
+        end if;
+    end process;
 
-red_out   <= rom_data(11 downto 8);
-green_out <= rom_data(7  downto 4);
-blue_out  <= rom_data(3  downto 0);
-
-
-END a;
-
-
+end a;
