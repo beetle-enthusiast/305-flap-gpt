@@ -16,14 +16,14 @@ architecture sim of double_dabble_tb is
     -- Component under test
     component double_dabble is
         port (
-            bin      : in  std_logic_vector(6 downto 0);
+            bin      : in  std_logic_vector(9 downto 0);
             hundreds : out std_logic_vector(3 downto 0);
             tens     : out std_logic_vector(3 downto 0);
             ones     : out std_logic_vector(3 downto 0)
         );
     end component;
 
-    signal bin_s      : std_logic_vector(6 downto 0);
+    signal bin_s      : std_logic_vector(9 downto 0);
     signal hundreds_s : std_logic_vector(3 downto 0);
     signal tens_s     : std_logic_vector(3 downto 0);
     signal ones_s     : std_logic_vector(3 downto 0);
@@ -47,9 +47,9 @@ begin
     begin
 
         -- Spot-check a handful of representative values
-        for v_dec in 0 to 127 loop
+        for v_dec in 0 to 1023 loop
 
-            bin_s <= std_logic_vector(to_unsigned(v_dec, 7));
+            bin_s <= std_logic_vector(to_unsigned(v_dec, 10));
             wait for 10 ns;
 
             -- Expected BCD digits
