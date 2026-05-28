@@ -100,7 +100,9 @@ signal pipe3_r, pipe3_g, pipe3_b : std_logic_vector(3 downto 0);
 signal pipe_r, pipe_g, pipe_b    : std_logic_vector(3 downto 0);
   
   --Signals for lfsr
-  signal randomiser_value : std_logic_vector (7 downto 0);
+  signal randomiser_value1 : std_logic_vector (7 downto 0);
+signal randomiser_value2 : std_logic_vector (7 downto 0);
+
 -- SIGNALS ADDED ENDS
 
 begin
@@ -293,7 +295,7 @@ HEART3 : entity work.heart
 				  start=> '1', 
 				  pixel_row => pixel_row, 
 				  pixel_column => pixel_column,
-                  randomiser_value => randomiser_value,
+                  randomiser_value1 => randomiser_value1,
 				  pipe_x_pos => pipe1_x_pos,
 				  pipe_y_pos => pipe1_y_pos,
 				  pipe_on => pipe1_on,
@@ -309,7 +311,7 @@ HEART3 : entity work.heart
                   pipe_b => pipe2_b,
 				  pixel_row => pixel_row, 
 				  pixel_column => pixel_column,
-                  randomiser_value => randomiser_value,
+                  randomiser_value1 => randomiser_value1,
 				  pipe_x_pos => pipe2_x_pos,
 				  pipe_y_pos => pipe2_y_pos,
 				  pipe_on => pipe2_on,
@@ -325,7 +327,7 @@ HEART3 : entity work.heart
                   pipe_b => pipe3_b,
 				  pixel_row => pixel_row, 
 				  pixel_column => pixel_column,
-                  randomiser_value => randomiser_value,
+                  randomiser_value1 => randomiser_value1,
 				  pipe_x_pos => pipe3_x_pos,
 				  pipe_y_pos => pipe3_y_pos,
 				  pipe_on => pipe3_on,

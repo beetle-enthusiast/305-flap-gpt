@@ -7,7 +7,7 @@ ENTITY pipe IS
 		(enable, start, vert_sync	: IN std_logic;
 		clk : IN STD_LOGIC;
         pixel_row, pixel_column	: IN std_logic_vector(9 DOWNTO 0);
-        randomiser_value: IN std_logic_vector(7 DOWNTO 0);
+        randomiser_value1: IN std_logic_vector(7 DOWNTO 0);
 		pipe_x_pos: OUT std_logic_vector(10 DOWNTO 0);
 		pipe_y_pos: OUT std_logic_vector(9 DOWNTO 0);
 		pipe_r,pipe_b,pipe_g : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
@@ -102,7 +102,7 @@ begin
 		if (start = '1' or started = '1') then
 			if (pipe_x_temp_pos <= end_pos) then
 				pipe_x_temp_pos <= starting_pos;
-				pipe_gap_pos    <= to_unsigned(100, 10) + unsigned("00" & randomiser_value);
+				pipe_gap_pos    <= to_unsigned(100, 10) + unsigned("00" & randomiser_value1);
 			else
 				pipe_x_temp_pos <= unsigned(signed(pipe_x_temp_pos) + pipe_x_motion);
 			end if;
