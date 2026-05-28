@@ -195,21 +195,13 @@ HEART3 : entity work.heart
 
 
 
- video_on <= '1' when (
-    box_on = '1' or
-    r_paused /= "0000" or
-    r_score /= "0000" or
-    r_heart1 /= "0000" or
-    r_heart2 /= "0000" or
-    r_heart3 /= "0000" or
-    r_level /= "0000" or
-    r_button /= "0000"
-) else '0';
 
-    red_out <= box_r or r_paused or r_score or r_heart1 or r_heart2 or r_heart3 or r_level or r_button;
-green_out <= box_g or g_paused or g_score or g_heart1 or g_heart2 or g_heart3 or g_level or g_button;
-blue_out <= box_b or b_paused or b_score or b_heart1 or b_heart2 or b_heart3 or b_level or b_button;
 
+red_out   <= r_paused or r_score or r_level or r_button when box_on = '1' else "0000";
+green_out <= g_paused or g_score or g_level or g_button when box_on = '1' else "0000";
+blue_out  <= b_paused or b_score or b_level or b_button when box_on = '1' else "0000";
+
+video_on <= box_on;
 
 END a;
 
