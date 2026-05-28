@@ -12,6 +12,10 @@ ENTITY GAMEOVER_SCREEN IS
         clock_25Mhz : IN STD_LOGIC;
         score : IN INTEGER RANGE 0 TO 999;
         is_high_score : IN STD_LOGIC;
+        mouse_click : in std_logic;
+        mouse_row : in std_logic_vector(9 downto 0);
+        mouse_col : in std_logic_vector(9 downto 0);
+        go_to_menu : out std_logic;
         video_on : OUT STD_LOGIC;
         red_out, green_out, blue_out : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
     );
@@ -39,6 +43,13 @@ signal r_highscore_gated, g_highscore_gated, b_highscore_gated : std_logic_vecto
 signal r_growths_gated, g_growths_gated, b_growths_gated : std_logic_vector(3 downto 0);
 
 
+signal mouse_row_int,mouse_col_int : integer;
+
+-- button back to main menu
+SIGNAL msg_menu : text_string(1 to 16) := "GO TO MAIN MENU!";
+SIGNAL r_menu, g_menu, b_menu : std_logic_vector(3 downto 0);
+
+
 -- Add button to restart game
 -- 2 options - play again or go to menu screen
 
@@ -56,6 +67,14 @@ begin
     box_g <= "0101" when box_on = '1' else "0000";
     box_b <= "0111" when box_on = '1' else "0000";
 
+
+    mouse_row_int <= to_integer(unsigned(mouse_row));
+    mouse_col_int <= to_integer(unsigned(mouse_col));
+
+    go_to_menu <= '1' when (mouse_click = '1' and 
+                        mouse_row_int >= 140 and mouse_row_int <= 340 and
+                        mouse_col_int >= 136 and mouse_col_int <= 504) 
+                        else '0';
 
     -- process for score
     process(score)
@@ -138,11 +157,29 @@ begin
     green_out => g_growths,
     blue_out => b_growths
     );
+
+    -- Main menu
+    VGA_TEXT_MENU : entity work.VGA_TEXT
+    port map (
+    pixel_row => pixel_row,
+    pixel_column => pixel_column,
+    clock_25Mhz => clock_25Mhz,
+    message => msg_menu,
+    start_row => 310,
+    start_col => 190,
+    scale => 1,
+    text_r => "1111",
+    text_g => "1111",
+    text_b => "0000",
+    red_out => r_menu,
+    green_out => g_menu,
+    blue_out => b_menu
+    );
     
    
-r_gameover_gated <= r_gameover ;
-g_gameover_gated <= g_gameover ;
-b_gameover_gated <= b_gameover ;
+r_gameover_gated <= r_gameover when is_high_score = '0' else "0000";
+g_gameover_gated <= g_gameover when is_high_score = '0' else "0000";
+b_gameover_gated <= b_gameover when is_high_score = '0' else "0000";
 
 r_highscore_gated <= r_highscore when is_high_score = '1' else "0000";
 g_highscore_gated <= g_highscore when is_high_score = '1' else "0000";
@@ -152,9 +189,9 @@ r_growths_gated <= r_growths when is_high_score = '1' else "0000";
 g_growths_gated <= g_growths when is_high_score = '1' else "0000";
 b_growths_gated <= b_growths when is_high_score = '1' else "0000";
     
-red_out <= r_gameover_gated or r_highscore_gated or r_growths_gated or r_score or box_r;
-green_out <= g_gameover_gated or g_highscore_gated or g_growths_gated or g_score or box_g;
-blue_out <= b_gameover_gated or b_highscore_gated or b_growths_gated or b_score or box_b;
+red_out <= r_gameover_gated or r_highscore_gated or r_growths_gated or r_score or  r_menu or box_r ;
+green_out <= g_gameover_gated or g_highscore_gated or g_growths_gated or g_score or g_menu or box_g;
+blue_out <= b_gameover_gated or b_highscore_gated or b_growths_gated or b_score or b_menu or box_b;
 
 
 video_on <= '1' when (

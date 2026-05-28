@@ -14,6 +14,9 @@ ENTITY GAMEPLAY_SCREEN IS
         clock_25Mhz : IN STD_LOGIC;
         mode : IN STD_LOGIC;
         left_click : IN std_logic;
+        reset : IN STD_LOGIC;
+        pause : IN STD_LOGIC;
+        player_dead : OUT STD_LOGIC; 
         is_high_score : out STD_LOGIC;
         score : out integer range 0 to 999;
         level : out integer range 1 to 3;
@@ -71,7 +74,7 @@ signal r_mode,g_mode,b_mode : std_logic_vector(3 downto 0 );
 --Signals for ball
   signal ball_r, ball_g, ball_b : std_logic_vector (3 downto 0);
   SIGNAL ball_on : std_logic;
-  signal ball_enable: std_logic:= '1';
+  signal ball_enable: std_logic;
   signal size				: std_logic_vector(9 DOWNTO 0);
 
   --Signals for collision
@@ -80,14 +83,17 @@ signal r_mode,g_mode,b_mode : std_logic_vector(3 downto 0 );
   SIGNAL pipe_y_pos, ball_y_pos : std_logic_vector(9 DOWNTO 0);
   
   --Signals for pipe
-  signal pipe_r, pipe_g, pipe_b, 
-		   pipe2_start, pipe3_start, 
-		   pipe_on, pipe1_on, pipe2_on, pipe3_on, 
-         pipe_enable, pipe1_enable, pipe2_enable, pipe3_enable: std_logic;
-  signal pipe_start: std_logic := '1';
+signal pipe2_start, pipe3_start,
+       pipe_on, pipe1_on, pipe2_on, pipe3_on,
+       pipe_enable, pipe1_enable, pipe2_enable, pipe3_enable : std_logic;
+  signal pipe_start: std_logic;
   signal pipe1_x_pos, pipe2_x_pos, pipe3_x_pos: std_logic_vector(10 downto 0);
   signal pipe1_y_pos, pipe2_y_pos, pipe3_y_pos: std_logic_vector(9 downto 0);
-  
+
+signal pipe1_r, pipe1_g, pipe1_b : std_logic_vector(3 downto 0);
+signal pipe2_r, pipe2_g, pipe2_b : std_logic_vector(3 downto 0);
+signal pipe3_r, pipe3_g, pipe3_b : std_logic_vector(3 downto 0);
+signal pipe_r, pipe_g, pipe_b    : std_logic_vector(3 downto 0);
   
   --Signals for lfsr
   signal randomiser_value : std_logic_vector (7 downto 0);
@@ -98,12 +104,16 @@ begin
     box_row_int <= to_integer(unsigned(pixel_row));
     box_col_int <= to_integer(unsigned(pixel_column));
 
-    box_on <= '1' when ( box_row_int <= 40 and box_col_int <= 639) else '0';
+    box_on <= '1' when ( box_row_int <= 55 and box_col_int <= 639) else '0';
 
     box_r <= "0010" when box_on = '1' else "0000";
     box_g <= "0001" when box_on = '1' else "0000";
     box_b <= "0000" when box_on = '1' else "0000";
 
+    ball_enable <= '1';
+pipe_start  <= '1';
+    -- hard code player dead when collison
+    player_dead <= collision;
     -- FOR NOW assigning outputs to score, level and lives 
     score <= score_int;
     level <= level_int;
@@ -130,23 +140,6 @@ begin
     end process;
 
 
-    --  -- text for lives for now 
-    -- VGA_TEXT_LIVE : entity work.VGA_TEXT
-    -- port map (
-    -- pixel_row => pixel_row,
-    -- pixel_column => pixel_column,
-    -- clock_25MhzMhz => clock_25MhzMhz,
-    -- message => msg_lives,
-    -- start_row => 12,
-    -- start_col => 10,
-    -- scale => 1,
-    -- text_r => "1111",
-    -- text_g => "1111",
-    -- text_b => "1111",
-    -- red_out => r_lives,
-    -- green_out => g_lives,
-    -- blue_out => b_lives
-    -- );
 
          -- text for levels
     VGA_TEXT_LEVEL : entity work.VGA_TEXT
@@ -155,7 +148,7 @@ begin
     pixel_column => pixel_column,
     clock_25Mhz => clock_25Mhz,
     message => msg_level,
-    start_row => 12,
+    start_row => 22,
     start_col => 280,
     scale => 1,
     text_r => "1111",
@@ -174,7 +167,7 @@ begin
     pixel_column => pixel_column,
     clock_25Mhz => clock_25Mhz,
     message => msg_score,
-    start_row => 12,
+    start_row => 22,
     start_col => 550,
     scale => 1,
     text_r => "1111",
@@ -193,7 +186,7 @@ begin
     pixel_column => pixel_column,
     clock_25Mhz => clock_25Mhz,
     message => msg_training,
-    start_row => 12,
+    start_row => 22,
     start_col => 100,
     scale => 1,
     text_r => "1111",
@@ -210,7 +203,7 @@ begin
     pixel_column => pixel_column,
     clock_25Mhz => clock_25Mhz,
     message => msg_sp,
-    start_row => 12,
+    start_row => 22,
     start_col => 100,
     scale => 1,
     text_r => "1111",
@@ -231,7 +224,7 @@ begin
         pixel_row => pixel_row,
         pixel_column => pixel_column,
         clock_25Mhz => clock_25Mhz,
-        start_row => 10,
+        start_row => 22,
         start_col => 10,
         visible => heart1_vis,
         red_out => r_heart1,
@@ -244,7 +237,7 @@ HEART2 : entity work.heart
         pixel_row => pixel_row,
         pixel_column => pixel_column,
         clock_25Mhz => clock_25Mhz,
-        start_row => 10,
+        start_row => 22,
         start_col => 40,
         visible => heart2_vis,
         red_out => r_heart2,
@@ -257,7 +250,7 @@ HEART3 : entity work.heart
         pixel_row => pixel_row,
         pixel_column => pixel_column,
         clock_25Mhz => clock_25Mhz,
-        start_row => 10,
+        start_row => 22,
         start_col => 70,
         visible => heart3_vis,
         red_out => r_heart3,
@@ -296,6 +289,10 @@ HEART3 : entity work.heart
     PIPE1_COMPONENT: entity work.pipe
     PORT MAP (enable => pipe_start, 
 				  vert_sync => vert_sync, 
+                  clk => clock_25Mhz,
+                  pipe_r => pipe1_r,
+                  pipe_g => pipe1_g,
+                  pipe_b => pipe1_b,
 				  start=> '1', 
 				  pixel_row => pixel_row, 
 				  pixel_column => pixel_column,
@@ -309,6 +306,10 @@ HEART3 : entity work.heart
     PORT MAP (enable => pipe_start,
 				  vert_sync => vert_sync, 
 				  start=> pipe2_start, 
+                  clk => clock_25Mhz,
+                  pipe_r => pipe2_r,
+                  pipe_g => pipe2_g,
+                  pipe_b => pipe2_b,
 				  pixel_row => pixel_row, 
 				  pixel_column => pixel_column,
                   randomiser_value => randomiser_value,
@@ -321,6 +322,10 @@ HEART3 : entity work.heart
     PORT MAP (enable => pipe_start,
 				  vert_sync => vert_sync, 
 				  start=> pipe3_start, 
+                  clk => clock_25Mhz,
+                  pipe_r => pipe3_r,
+                  pipe_g => pipe3_g,
+                  pipe_b => pipe3_b,
 				  pixel_row => pixel_row, 
 				  pixel_column => pixel_column,
                   randomiser_value => randomiser_value,
@@ -337,11 +342,17 @@ HEART3 : entity work.heart
 		  pipe_on => pipe_on,
         ball_y_pos => ball_y_pos,
         ball_size => size,
-        collision => collision,
-		  pipe_start => pipe_start,
-		  ball_enable => ball_enable);
+        collision => collision
+		--   pipe_start => pipe_start,
+		--   ball_enable => ball_enable
+        );
 
 -- ADDITIONAL COMPOENNETS END
+
+pipe_r <= pipe1_r or pipe2_r or pipe3_r;
+pipe_g <= pipe1_g or pipe2_g or pipe3_g;
+pipe_b <= pipe1_b or pipe2_b or pipe3_b;
+
 
   -- Pipe logic
   pipe3_start<= '1' when pipe2_x_pos <= std_logic_vector(to_unsigned(425, 11))
@@ -369,15 +380,14 @@ g_mode <= g_training when mode = '0' else g_sp;
 b_mode <= b_training when mode = '0' else b_sp;
 
 
-red_in   <= "0000" when pipe_on = '1' else ball_r when ball_on = '1' else "0000";
-green_in <= "1111" when pipe_on = '1' else ball_g when ball_on = '1' else "0000";
-blue_in  <= "0000" when pipe_on = '1' else ball_b when ball_on = '1' else "0000";
+red_in   <= pipe_r when pipe_on = '1' else ball_r when ball_on = '1' else "0000";
+green_in <= pipe_g when pipe_on = '1' else ball_g when ball_on = '1' else "0000";
+blue_in  <= pipe_b when pipe_on = '1' else ball_b when ball_on = '1' else "0000";
 
-red_out <= box_r or r_score or r_level or r_heart1 or r_heart2 or r_heart3 or r_mode  or red_in;
-green_out <= box_g or g_score or g_level or g_heart1 or g_heart2 or g_heart3 or g_mode or green_in;
-blue_out <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or b_mode or blue_in;
+red_out   <= box_r or r_score or r_level or r_heart1 or r_heart2 or r_heart3 or r_mode when box_on = '1' else red_in;
+green_out <= box_g or g_score or g_level or g_heart1 or g_heart2 or g_heart3 or g_mode when box_on = '1' else green_in;
+blue_out  <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or b_mode when box_on = '1' else blue_in;
 
-    -- VIDEO ON SIGNAL
   video_on <= '1' when (
     box_on = '1' or
     pipe_on = '1' or

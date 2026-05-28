@@ -83,6 +83,8 @@ architecture hw_interface of flappy_bird is
   --Signals for gameover 
   signal r_gameover,g_gameover,b_gameover : std_logic_vector(3 downto 0);
   signal gameover_video_on : std_logic;
+  signal gameover_clicked : std_logic;
+  signal gameover_screen_click : std_logic;
 
   -- Gated the mouse clicks
 
@@ -172,7 +174,8 @@ begin
   -- assignments
   gate_left_click  <= left_click when state = PLAY_GAME else '0';
   gate_start_click <= left_click when state = START_MENU else '0';
-  PLAY <= not KEY(0) or gate_start_click;
+  gameover_clicked <=  gameover_screen_click when state = GAME_OVER else '0';
+ PLAY <= not KEY(0) or gate_start_click or gameover_clicked;
   RESTART <= not KEY(1);
   MODE <= SW(0);
 
@@ -187,7 +190,7 @@ begin
       game_mode => game_mode,
       reset => game_reset,
       pause => game_pause,
-      player_dead => '0' --testing
+      player_dead => player_dead
   );
 
   -- START SCREEN
@@ -221,6 +224,9 @@ GAME_PLAY_SCREEN : entity work.gameplay_screen
     level => current_level,
     lives => current_lives,
     is_high_score => is_high_score,
+    reset => game_reset,
+    pause => game_pause,
+    player_dead => player_dead,
     left_click => gate_left_click,
     video_on => game_video_on,
     red_out => r_game,
@@ -252,6 +258,10 @@ GAME_PLAY_SCREEN : entity work.gameplay_screen
         clock_25Mhz => CLOCK_25,
         score => current_score, 
         is_high_score => is_high_score, 
+        mouse_click => left_click,
+        mouse_row   => mouse_row,
+        mouse_col   => mouse_col,
+        go_to_menu  => gameover_screen_click,
         red_out => r_gameover,
         green_out => g_gameover,
         blue_out => b_gameover,
@@ -270,6 +280,7 @@ red_in <= cursor_r when cursor_on = '1' else
           r_game when state = PLAY_GAME and game_video_on = '1' else
           bg_r when state = PLAY_GAME else
           r_pause when state = PAUSE_GAME and pause_video_on = '1' else
+          r_game when state = PAUSE_GAME and game_video_on = '1' else
           bg_r when state = PAUSE_GAME else
           r_gameover when state = GAME_OVER and gameover_video_on = '1' else 
           bg_r when STATE = GAME_OVER else
@@ -281,6 +292,7 @@ green_in <= cursor_g when cursor_on = '1' else
             g_game when state = PLAY_GAME and game_video_on = '1' else
             bg_g when state = PLAY_GAME else
             g_pause when state = PAUSE_GAME and pause_video_on = '1' else
+            g_game when state = PAUSE_GAME and game_video_on = '1' else
             bg_g when state = PAUSE_GAME else
             g_gameover when state = GAME_OVER and gameover_video_on = '1' else 
             bg_g when STATE = GAME_OVER else
@@ -292,6 +304,9 @@ blue_in <= cursor_b when cursor_on = '1' else
            b_game when state = PLAY_GAME and game_video_on = '1' else
            bg_b when state = PLAY_GAME else
            b_pause when state = PAUSE_GAME and pause_video_on = '1' else
+            b_game when state = PAUSE_GAME and game_video_on = '1' else
+          bg_b when state = PAUSE_GAME else
+
            b_gameover when state = GAME_OVER and gameover_video_on = '1' else 
            bg_b when STATE = GAME_OVER else
 			  bg_b;
