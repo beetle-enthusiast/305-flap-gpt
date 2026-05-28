@@ -105,15 +105,19 @@ begin
           null;
       
       end case;
-    end if;
 
+      if ( current_state = START_MENU) then reset<= '1'; else reset <= '0'; end if;
+      if (current_state = PAUSE_GAME or current_state = GAME_OVER) then pause <= '1'; else pause <='0'; end if;
+
+
+    end if;
   end process;
 
   state <= current_state;
 
-  reset <=  '1' when (current_state = START_MENU)
-            else '0';
-  pause <=  '1' when (current_state = PAUSE_GAME) or (current_state = GAME_OVER)
-            else '0';
+  -- reset <=  '1' when (current_state = START_MENU)
+  --           else '0';
+  -- pause <=  '1' when (current_state = PAUSE_GAME) or (current_state = GAME_OVER)
+  --           else '0';
 
 end architecture;

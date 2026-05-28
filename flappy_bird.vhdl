@@ -85,6 +85,8 @@ architecture hw_interface of flappy_bird is
   signal gate_left_click  : std_logic;
   signal gate_start_click : std_logic;
 
+  signal start_on, pause_on, gameover_on : std_logic;
+
 
   -- BCD 7-seg inputs
   signal bcd : binary_coded_decimal;
@@ -99,22 +101,6 @@ architecture hw_interface of flappy_bird is
   end component;
 
 begin
-
-
-   -- GENERATE CURSOR TEMP.
-
-  row_int <= to_integer(unsigned(pixel_row));
-  col_int <= to_integer(unsigned(pixel_column));
-  mouse_row_int <= to_integer(unsigned(mouse_row));
-  mouse_col_int <= to_integer(unsigned(mouse_col));
-
-  cursor_on <= '1' when (row_int >= mouse_row_int and row_int < mouse_row_int + 8 and col_int >= mouse_col_int and col_int < mouse_col_int + 8) else '0';
-
-  cursor_r <= "1111" when cursor_on = '1' else "0000";
-  cursor_g <= "0000" when cursor_on = '1' else "0000";
-  cursor_b <= "1111" when cursor_on = '1' else "0000";
-
-
 
 
   CLK_DIV_2 : pll_25mhz
@@ -236,9 +222,9 @@ GAME_PLAY_SCREEN : entity work.gameplay_screen
         pixel_row => pixel_row,
         pixel_column => pixel_column,
         clock_25Mhz => CLOCK_25,
-        score => current_score, -- Placeholder score value
-        level => current_level, -- Placeholder level value
-        lives => current_lives, -- Placeholder lives value MAX 3 
+        score => current_score,
+        level => current_level, 
+        lives => current_lives,
         red_out => r_pause,
         green_out => g_pause,
         blue_out => b_pause,
@@ -264,47 +250,105 @@ GAME_PLAY_SCREEN : entity work.gameplay_screen
     );
 
 
-  
+start_on    <= start_r(3) or start_r(2) or start_r(1) or start_r(0) or
+               start_g(3) or start_g(2) or start_g(1) or start_g(0) or
+               start_b(3) or start_b(2) or start_b(1) or start_b(0);
 
+pause_on    <= r_pause(3) or r_pause(2) or r_pause(1) or r_pause(0) or
+               g_pause(3) or g_pause(2) or g_pause(1) or g_pause(0) or
+               b_pause(3) or b_pause(2) or b_pause(1) or b_pause(0);
 
+gameover_on <= r_gameover(3) or r_gameover(2) or r_gameover(1) or r_gameover(0) or
+               g_gameover(3) or g_gameover(2) or g_gameover(1) or g_gameover(0) or
+               b_gameover(3) or b_gameover(2) or b_gameover(1) or b_gameover(0);
+Output_mux : process(CLOCK_25)
+begin
+    if rising_edge(CLOCK_25) then
+        if cursor_on = '1' then
+            red_in   <= cursor_r;
+            green_in <= cursor_g;
+            blue_in  <= cursor_b;
 
-  -- VGA background assignment
-red_in <= cursor_r when cursor_on = '1' else
-          start_r when state = START_MENU and start_video_on = '1' else
-          bg_r when state = START_MENU else
-          r_game when state = PLAY_GAME and game_video_on = '1' else
-          bg_r when state = PLAY_GAME else
-          r_pause when state = PAUSE_GAME and pause_video_on = '1' else
-          r_game when state = PAUSE_GAME and game_video_on = '1' else
-          bg_r when state = PAUSE_GAME else
-          r_gameover when state = GAME_OVER and gameover_video_on = '1' else 
-          bg_r when STATE = GAME_OVER else
-          bg_r;
+        elsif state = START_MENU then
+            if start_on = '1' then
+                red_in   <= start_r;
+                green_in <= start_g;
+                blue_in  <= start_b;
+            else
+                red_in   <= bg_r;
+                green_in <= bg_g;
+                blue_in  <= bg_b;
+            end if;
 
-green_in <= cursor_g when cursor_on = '1' else
-            start_g when state = START_MENU and start_video_on = '1' else
-            bg_g when state = START_MENU else
-            g_game when state = PLAY_GAME and game_video_on = '1' else
-            bg_g when state = PLAY_GAME else
-            g_pause when state = PAUSE_GAME and pause_video_on = '1' else
-            g_game when state = PAUSE_GAME and game_video_on = '1' else
-            bg_g when state = PAUSE_GAME else
-            g_gameover when state = GAME_OVER and gameover_video_on = '1' else 
-            bg_g when STATE = GAME_OVER else
-            bg_g;
+        elsif state = PLAY_GAME then
+            if game_video_on = '1' then
+                red_in   <= r_game;
+                green_in <= g_game;
+                blue_in  <= b_game;
+            else
+                red_in   <= bg_r;
+                green_in <= bg_g;
+                blue_in  <= bg_b;
+            end if;
 
-blue_in <= cursor_b when cursor_on = '1' else
-           start_b when state = START_MENU and start_video_on = '1' else
-           bg_b when state = START_MENU else
-           b_game when state = PLAY_GAME and game_video_on = '1' else
-           bg_b when state = PLAY_GAME else
-           b_pause when state = PAUSE_GAME and pause_video_on = '1' else
-            b_game when state = PAUSE_GAME and game_video_on = '1' else
-          bg_b when state = PAUSE_GAME else
+        elsif state = PAUSE_GAME then
+            if pause_on = '1' then
+                red_in   <= r_pause;
+                green_in <= g_pause;
+                blue_in  <= b_pause;
+            elsif game_video_on = '1' then
+                red_in   <= r_game;
+                green_in <= g_game;
+                blue_in  <= b_game;
+            else
+                red_in   <= bg_r;
+                green_in <= bg_g;
+                blue_in  <= bg_b;
+            end if;
 
-           b_gameover when state = GAME_OVER and gameover_video_on = '1' else 
-           bg_b when STATE = GAME_OVER else
-			  bg_b;
+        elsif state = GAME_OVER then
+            if gameover_on = '1' then
+                red_in   <= r_gameover;
+                green_in <= g_gameover;
+                blue_in  <= b_gameover;
+            else
+                red_in   <= bg_r;
+                green_in <= bg_g;
+                blue_in  <= bg_b;
+            end if;
+
+        else
+            red_in   <= bg_r;
+            green_in <= bg_g;
+            blue_in  <= bg_b;
+        end if;
+    end if;
+end process;
+
+  -- Cursor logic
+  Cursor_logic : process(CLOCK_25)
+begin
+    if rising_edge(CLOCK_25) then
+        row_int       <= to_integer(unsigned(pixel_row));
+        col_int       <= to_integer(unsigned(pixel_column));
+        mouse_row_int <= to_integer(unsigned(mouse_row));
+        mouse_col_int <= to_integer(unsigned(mouse_col));
+
+        if row_int >= mouse_row_int and row_int < mouse_row_int + 8 and
+           col_int >= mouse_col_int and col_int < mouse_col_int + 8 then
+            cursor_on <= '1';
+            cursor_r  <= "1111";
+            cursor_g  <= "0000";
+            cursor_b  <= "1111";
+        else
+            cursor_on <= '0';
+            cursor_r  <= "0000";
+            cursor_g  <= "0000";
+            cursor_b  <= "0000";
+        end if;
+    end if;
+end process;
+
 
   -- VGA driver assignment
   VGA_R <= red_sig;
@@ -317,7 +361,7 @@ blue_in <= cursor_b when cursor_on = '1' else
   
   BIN_TO_BCD: entity work.double_dabble
   port map (
-		bin => std_logic_vector(to_unsigned(current_lives,7)),
+		bin => std_logic_vector(to_unsigned(current_lives,10)),
     dec => bcd
   );
   

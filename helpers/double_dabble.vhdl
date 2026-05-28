@@ -22,17 +22,17 @@ use work.custom_types.all;
 entity double_dabble is
     port (
       bin     : in  std_logic_vector(9 downto 0);  -- 7-bit binary input
-      -- dec     : out binary_coded_decimal
-      hundreds : out std_logic_vector(3 downto 0); -- BCD hundreds digit (0-1)
-      tens : out std_logic_vector(3 downto 0); -- BCD hundreds digit (0-9)
-      ones : out std_logic_vector(3 downto 0) -- BCD hundreds digit (0-9)
+      dec     : out binary_coded_decimal
+      -- hundreds : out std_logic_vector(3 downto 0); -- BCD hundreds digit (0-1)
+      -- tens : out std_logic_vector(3 downto 0); -- BCD hundreds digit (0-9)
+      -- ones : out std_logic_vector(3 downto 0) -- BCD hundreds digit (0-9)
     );
 end entity double_dabble;
 
 architecture rtl of double_dabble is
-    -- signal hundreds : std_logic_vector(3 downto 0); -- BCD hundreds digit (0-1)
-    -- signal tens : std_logic_vector(3 downto 0); -- BCD hundreds digit (0-9)
-    -- signal ones : std_logic_vector(3 downto 0); -- BCD hundreds digit (0-9)
+    signal hundreds : std_logic_vector(3 downto 0); -- BCD hundreds digit (0-1)
+    signal tens : std_logic_vector(3 downto 0); -- BCD hundreds digit (0-9)
+    signal ones : std_logic_vector(3 downto 0); -- BCD hundreds digit (0-9)
 begin
 
     process(bin)
@@ -75,9 +75,9 @@ begin
         tens     <= scratch(17 downto 14);
         ones     <= scratch(13 downto 10);
 
-        -- dec(2) <= hundreds;
-        -- dec(1) <= tens;
-        -- dec(0) <= ones;
+        dec(2) <= hundreds;
+        dec(1) <= tens;
+        dec(0) <= ones;
 
     end process;
 

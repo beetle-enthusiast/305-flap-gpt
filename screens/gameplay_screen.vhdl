@@ -112,17 +112,9 @@ begin
     );
 		score <= points;
 
-    box_row_int <= to_integer(unsigned(pixel_row));
-    box_col_int <= to_integer(unsigned(pixel_column));
-
-    box_on <= '1' when ( box_row_int <= 55 and box_col_int <= 639) else '0';
-
-    box_r <= "0010" when box_on = '1' else "0000";
-    box_g <= "0001" when box_on = '1' else "0000";
-    box_b <= "0000" when box_on = '1' else "0000";
-
     ball_enable <= '1';
 		pipe_start  <= '1';
+
     -- FOR NOW assigning outputs to score, level and lives 
     score <= score_int;
     level <= level_int;
@@ -353,53 +345,100 @@ HEART3 : entity work.heart
     );
 
 -- ADDITIONAL COMPOENNETS END
+-- 1. box and mode signals
+box_and_mode: process(clock_25Mhz)
+begin 
+    if rising_edge(clock_25Mhz) then 
+        box_row_int <= to_integer(unsigned(pixel_row));
+        box_col_int <= to_integer(unsigned(pixel_column));
+        
+        if box_row_int <= 55 and box_col_int <= 639 then
+            box_on <= '1';
+        else 
+            box_on <= '0';
+        end if;
 
-pipe_r <= pipe1_r or pipe2_r or pipe3_r;
-pipe_g <= pipe1_g or pipe2_g or pipe3_g;
-pipe_b <= pipe1_b or pipe2_b or pipe3_b;
+        if box_on = '1' then 
+            box_r <= "0010";
+            box_g <= "0001";
+            box_b <= "0000";
+        else 
+            box_r <= "0000"; box_g <= "0000"; box_b <= "0000";
+        end if;
+
+         if mode = '0' then
+            r_mode <= r_training;
+            g_mode <= g_training;
+            b_mode <= b_training;
+        else
+            r_mode <= r_sp;
+            g_mode <= g_sp;
+            b_mode <= b_sp;
+        end if;
+    end if;
+        
+end process;
+
+-- r_mode <= r_training when mode = '0' else r_sp;
+-- g_mode <= g_training when mode = '0' else g_sp;
+-- b_mode <= b_training when mode = '0' else b_sp;
+        
+
+-- Pipe logic 
+Pipe_logic : process(clock_25Mhz)
+begin
+  if rising_edge(clock_25Mhz) then
+    pipe_r <= pipe1_r or pipe2_r or pipe3_r;
+    pipe_g <= pipe1_g or pipe2_g or pipe3_g;
+    pipe_b <= pipe1_b or pipe2_b or pipe3_b;
+
+    pipe_enable <= pipe1_enable or pipe2_enable or pipe3_enable;
+
+    if pipe2_x_pos <= std_logic_vector(to_unsigned(425,11)) then
+      pipe3_start <= '1';
+    else
+      pipe3_start <= '0';
+    end if;
+
+    if pipe1_x_pos <= std_logic_vector(to_unsigned(425,11)) then
+      pipe2_start <= '1';
+    else
+      pipe2_start <= '0';
+    end if;
+  end if;
+end process;
 
 
-  -- Pipe logic
-  pipe3_start<= '1' when pipe2_x_pos <= std_logic_vector(to_unsigned(425, 11))
-						  else 
-					 '0';
-					 
-  pipe2_start<= '1' when pipe1_x_pos <= std_logic_vector(to_unsigned(425, 11))
-						  else 
-					 '0';
-		
-  pipe_on <= pipe1_on or pipe2_on or pipe3_on;
-  
-  pipe_enable <= pipe1_enable or pipe2_enable or pipe3_enable;
+  -- video on
+  Video_on_proc : process(clock_25Mhz)
+  begin 
+      if rising_edge(clock_25Mhz)then 
+          if (box_on = '1' or pipe_on = '1' or ball_on = '1') then video_on <= '1'; else video_on <= '0'; end if;
+      end if; 
+  end process;
 
-
-
-r_mode <= r_training when mode = '0' else r_sp;
-g_mode <= g_training when mode = '0' else g_sp;
-b_mode <= b_training when mode = '0' else b_sp;
-
-
-red_in   <= pipe_r when pipe_on = '1' else ball_r when ball_on = '1' else "0000";
-green_in <= pipe_g when pipe_on = '1' else ball_g when ball_on = '1' else "0000";
-blue_in  <= pipe_b when pipe_on = '1' else ball_b when ball_on = '1' else "0000";
-
-red_out   <= box_r or r_score or r_level or r_heart1 or r_heart2 or r_heart3 or r_mode when box_on = '1' else red_in;
-green_out <= box_g or g_score or g_level or g_heart1 or g_heart2 or g_heart3 or g_mode when box_on = '1' else green_in;
-blue_out  <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or b_mode when box_on = '1' else blue_in;
-
-  video_on <= '1' when (
-    box_on = '1' or
-    pipe_on = '1' or
-    ball_on = '1' or
-    r_score /= "0000" or g_score /= "0000" or b_score /= "0000" or
-    r_level /= "0000" or g_level /= "0000" or b_level /= "0000" or
-    r_heart1 /= "0000" or g_heart1 /= "0000" or b_heart1 /= "0000" or
-    r_heart2 /= "0000" or g_heart2 /= "0000" or b_heart2 /= "0000" or
-    r_heart3 /= "0000" or g_heart3 /= "0000" or b_heart3 /= "0000" or
-    r_mode /= "0000" or g_mode /= "0000" or b_mode /= "0000" 
-) else '0';
-
-
+  Output_assignments : process(clock_25Mhz)
+begin 
+    if rising_edge(clock_25Mhz) then 
+        if box_on = '1' then 
+            red_out <= box_r or r_score or r_level or r_heart1 or r_heart2 or r_heart3 or r_mode;
+            green_out <= box_g or g_score or g_level or g_heart1 or g_heart2 or g_heart3 or g_mode;
+            blue_out <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or b_mode;
+        elsif pipe_on = '1' then 
+            red_out <= pipe_r;
+            green_out <= pipe_g;
+            blue_out <= pipe_b;
+        elsif ball_on = '1' then 
+            red_out <= ball_r;
+            green_out <= ball_g;
+            blue_out <= ball_b;
+        else 
+            red_out <= "0000";
+            green_out <= "0000";
+            blue_out <= "0000";
+        end if;
+      end if;
+  end process;
 
 	DECR_LIVES: process(clock_25MHz)
 		variable has_collided : std_logic := '0';

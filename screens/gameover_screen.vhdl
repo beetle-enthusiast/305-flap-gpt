@@ -54,31 +54,6 @@ SIGNAL r_menu, g_menu, b_menu : std_logic_vector(3 downto 0);
 
 begin
 
-    box_row_int <= to_integer(unsigned(pixel_row));
-    box_col_int <= to_integer(unsigned(pixel_column));
-
-    box_on <= '1' when (box_row_int >= 140 and box_row_int <= 340 and box_col_int >= 136 and box_col_int <= 504) else '0';
-
-    box_r <= "1111" when box_on = '1' else "0000";
-    box_g <= "0101" when box_on = '1' else "0000";
-    box_b <= "0111" when box_on = '1' else "0000";
-
-
-    mouse_row_int <= to_integer(unsigned(mouse_row));
-    mouse_col_int <= to_integer(unsigned(mouse_col));
-
-    go_to_menu <= '1' when (mouse_click = '1' and 
-                        mouse_row_int >= 140 and mouse_row_int <= 340 and
-                        mouse_col_int >= 136 and mouse_col_int <= 504) 
-                        else '0';
-
-    -- process for score
-    process(score)
-    begin
-        msg_score(8) <= character'val(score / 100 + 48);
-        msg_score(9) <= character'val((score mod 100) / 10 + 48);
-        msg_score(10) <= character'val(score mod 10 + 48);
-    end process;
 
 
     -- Game Over Text
@@ -172,31 +147,75 @@ begin
     blue_out => b_menu
     );
     
-   
-r_gameover_gated <= r_gameover when is_high_score = '0' else "0000";
-g_gameover_gated <= g_gameover when is_high_score = '0' else "0000";
-b_gameover_gated <= b_gameover when is_high_score = '0' else "0000";
+   --processes
+     process(score)
+    begin
+        msg_score(8) <= character'val(score / 100 + 48);
+        msg_score(9) <= character'val((score mod 100) / 10 + 48);
+        msg_score(10) <= character'val(score mod 10 + 48);
+    end process;
 
-r_highscore_gated <= r_highscore when is_high_score = '1' else "0000";
-g_highscore_gated <= g_highscore when is_high_score = '1' else "0000";
-b_highscore_gated <= b_highscore when is_high_score = '1' else "0000";
+  Output_assignments : process(clock_25Mhz)
+  begin
+    if rising_edge(clock_25Mhz) then 
 
-r_growths_gated <= r_growths when is_high_score = '1' else "0000";
-g_growths_gated <= g_growths when is_high_score = '1' else "0000";
-b_growths_gated <= b_growths when is_high_score = '1' else "0000";
-    
-red_out <= r_gameover_gated or r_highscore_gated or r_growths_gated or r_score or  r_menu or box_r ;
-green_out <= g_gameover_gated or g_highscore_gated or g_growths_gated or g_score or g_menu or box_g;
-blue_out <= b_gameover_gated or b_highscore_gated or b_growths_gated or b_score or b_menu or box_b;
+        -- pixel and mouse 
+        box_row_int <= to_integer(unsigned(pixel_row));
+        box_col_int <= to_integer(unsigned(pixel_column));
+        mouse_row_int <= to_integer(unsigned(mouse_row));
+        mouse_col_int <= to_integer(unsigned(mouse_col));
 
+        if (box_row_int >= 140 and box_row_int <= 340 and box_col_int >= 136 and box_col_int <= 504) then 
+            box_on <= '1';
+            box_r <= "1111"; box_g <= "0101"; box_b <= "0111";
+        else 
+            box_on <= '0';
+            box_r  <= "0000"; box_g <= "0000"; box_b <= "0000";
+        end if;
 
-video_on <= '1' when (
-    box_on = '1' or
-    r_gameover /= "0000" or g_gameover /= "0000" or b_gameover /= "0000" or
-    r_score /= "0000" or g_score /= "0000" or b_score /= "0000" or
-    r_highscore_gated /= "0000" or g_highscore_gated /= "0000" or b_highscore_gated /= "0000" or
-    r_growths_gated /= "0000" or g_growths_gated /= "0000" or b_growths_gated /= "0000"
-) else '0';
+        --Gate gameover vs high score
+        if is_high_score = '0' then
+                r_gameover_gated <= r_gameover;
+                g_gameover_gated <= g_gameover;
+                b_gameover_gated <= b_gameover;
+            else
+                r_gameover_gated <= "0000";
+                g_gameover_gated <= "0000";
+                b_gameover_gated <= "0000";
+            end if;
+
+            if is_high_score = '1' then
+                r_highscore_gated <= r_highscore;
+                g_highscore_gated <= g_highscore;
+                b_highscore_gated <= b_highscore;
+                r_growths_gated   <= r_growths;
+                g_growths_gated   <= g_growths;
+                b_growths_gated   <= b_growths;
+            else
+                r_highscore_gated <= "0000";
+                g_highscore_gated <= "0000";
+                b_highscore_gated <= "0000";
+                r_growths_gated   <= "0000";
+                g_growths_gated   <= "0000";
+                b_growths_gated   <= "0000";
+            end if;
+
+        -- Navigation to main menu
+         if mouse_click = '1' and
+               mouse_row_int >= 140 and mouse_row_int <= 340 and
+               mouse_col_int >= 136 and mouse_col_int <= 504 then
+                go_to_menu <= '1';
+            else
+                go_to_menu <= '0';
+            end if;
+
+        --Output 
+        red_out   <= r_gameover_gated or r_highscore_gated or r_growths_gated or r_score or r_menu or box_r;
+        green_out <= g_gameover_gated or g_highscore_gated or g_growths_gated or g_score or g_menu or box_g;
+        blue_out  <= b_gameover_gated or b_highscore_gated or b_growths_gated or b_score or b_menu or box_b;
+        video_on  <= '1';
+    end if;
+  end process;
 
 END a;
 
