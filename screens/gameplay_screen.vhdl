@@ -391,7 +391,7 @@ begin
     pipe_r <= pipe1_r or pipe2_r or pipe3_r;
     pipe_g <= pipe1_g or pipe2_g or pipe3_g;
     pipe_b <= pipe1_b or pipe2_b or pipe3_b;
-
+    pipe_on <=  pipe1_on or pipe2_on or pipe3_on;
     pipe_enable <= pipe1_enable or pipe2_enable or pipe3_enable;
 
     if pipe2_x_pos <= std_logic_vector(to_unsigned(425,11)) then

@@ -361,7 +361,7 @@ end process;
   
   BIN_TO_BCD: entity work.double_dabble
   port map (
-		bin => std_logic_vector(to_unsigned(current_lives,10)),
+		bin => std_logic_vector(to_unsigned(current_score,10)),
     dec => bcd
   );
   
