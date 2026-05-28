@@ -357,7 +357,7 @@ HEART3 : entity work.heart
 		--   ball_enable => ball_enable
         );
 
-    COFFEE_BEAN_COMPONENT: entity work.coffee_beans
+    COFFEE_BEAN_COMPONENT: entity work.coffee_bean
     PORT MAP (enable => pipe_start, 
                   vert_sync => vert_sync, 
                   start=> '1', 
@@ -401,35 +401,32 @@ g_mode <= g_training when mode = '0' else g_sp;
 b_mode <= b_training when mode = '0' else b_sp;
 
 
-red_in   <= pipe_r when pipe_on = '1' else ball_r when ball_on = '1' else "0000";
-green_in <= pipe_g when pipe_on = '1' else ball_g when ball_on = '1' else "0000";
-blue_in  <= pipe_b when pipe_on = '1' else ball_b when ball_on = '1' else "0000";
+red_in   <= pipe_r when pipe_on = '1' else ball_r when ball_on = '1' else bean_g when bean_on_temp = '1' else "0000";
+green_in <= pipe_g when pipe_on = '1' else ball_g when ball_on = '1' else bean_g when bean_on_temp = '1' else "0000";
+blue_in  <= pipe_b when pipe_on = '1' else ball_b when ball_on = '1' else bean_g when bean_on_temp = '1' else "0000";
 
---red_out   <= box_r or r_score or r_level or r_heart1 or r_heart2 or r_heart3 or bean_r or r_mode when box_on = '1' else red_in;
---green_out <= box_g or g_score or g_level or g_heart1 or g_heart2 or g_heart3 or bean_g or g_mode when box_on = '1' else green_in;
---blue_out  <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or bean_b or b_mode when box_on = '1' else blue_in;
-red_out   <= "0000" when bean_on_temp = '1' else "1111";
-green_out <= "1111" when bean_on_temp = '1' else "0000";
-blue_out  <= "0000";
+red_out   <= box_r or r_score or r_level or r_heart1 or r_heart2 or r_heart3 or bean_r or r_mode when box_on = '1' else red_in;
+green_out <= box_g or g_score or g_level or g_heart1 or g_heart2 or g_heart3 or bean_g or g_mode when box_on = '1' else green_in;
+blue_out  <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or bean_b or b_mode when box_on = '1' else blue_in;
 
-video_on <= '1';
 
---  video_on <= '1' when (
---    box_on = '1' or
---    pipe_on = '1' or
---    ball_on = '1' or
---    r_score /= "0000" or g_score /= "0000" or b_score /= "0000" or
---    r_level /= "0000" or g_level /= "0000" or b_level /= "0000" or
---    r_heart1 /= "0000" or g_heart1 /= "0000" or b_heart1 /= "0000" or
---    r_heart2 /= "0000" or g_heart2 /= "0000" or b_heart2 /= "0000" or
---    r_heart3 /= "0000" or g_heart3 /= "0000" or b_heart3 /= "0000" or
---    r_mode /= "0000" or g_mode /= "0000" or b_mode /= "0000" 
---) else '0';
+
+  video_on <= '1' when (
+    box_on = '1' or
+    pipe_on = '1' or
+    ball_on = '1' or
+    r_score /= "0000" or g_score /= "0000" or b_score /= "0000" or
+    r_level /= "0000" or g_level /= "0000" or b_level /= "0000" or
+    r_heart1 /= "0000" or g_heart1 /= "0000" or b_heart1 /= "0000" or
+    r_heart2 /= "0000" or g_heart2 /= "0000" or b_heart2 /= "0000" or
+    r_heart3 /= "0000" or g_heart3 /= "0000" or b_heart3 /= "0000" or
+    r_mode /= "0000" or g_mode /= "0000" or b_mode /= "0000" 
+) else '0';
 
 
 --TESTING
-
 bean_on <= bean_on_temp;
+
 END a;
 
 

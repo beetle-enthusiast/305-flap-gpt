@@ -3,7 +3,7 @@ USE IEEE.STD_LOGIC_1164.all;
 use ieee.numeric_std.all;
 
 
-ENTITY coffee_beans IS
+ENTITY coffee_bean IS
 	PORT
 		(enable, start, vert_sync	: IN std_logic;
         pixel_row, pixel_column	: IN std_logic_vector(9 DOWNTO 0);
@@ -14,9 +14,9 @@ ENTITY coffee_beans IS
 		  bean_x_pos: OUT std_logic_vector(10 DOWNTO 0);
 		  bean_y_pos: OUT std_logic_vector(9 DOWNTO 0);
 		  bean_on, bean_enable: OUT std_logic);		
-END coffee_beans;
+END coffee_bean;
 
-architecture behavior of coffee_beans is
+architecture behavior of coffee_bean is
 SIGNAL bean_size        : unsigned(9 DOWNTO 0);
 SIGNAL bean_x_temp_pos  : unsigned(10 DOWNTO 0) := to_unsigned(639, 11);
 SIGNAL bean_y_temp_pos  : unsigned(9 DOWNTO 0)  := to_unsigned(300, 10);

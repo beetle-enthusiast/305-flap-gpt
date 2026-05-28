@@ -1,121 +1,122 @@
 LIBRARY IEEE;
-USE IEEE.STD_LOGIC_1164.all;
-USE IEEE.STD_LOGIC_ARITH.all;
-USE IEEE.STD_LOGIC_SIGNED.all;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.NUMERIC_STD.ALL;
 
 ENTITY pipe IS
-	PORT
-		(enable, start, vert_sync	: IN std_logic;
-		clk : IN STD_LOGIC;
-        pixel_row, pixel_column	: IN std_logic_vector(9 DOWNTO 0);
-          randomiser_value1: IN std_logic_vector(7 DOWNTO 0);
-		  pipe_x_pos: OUT std_logic_vector(10 DOWNTO 0);
-		  pipe_y_pos: OUT std_logic_vector(9 DOWNTO 0);
-		  pipe_r,pipe_b,pipe_g : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
-		  pipe_on, pipe_enable, pipe_passed: OUT std_logic);		
+    PORT (
+        enable, start, vert_sync : IN std_logic;
+        clk                      : IN std_logic;
+        pixel_row, pixel_column  : IN std_logic_vector(9 DOWNTO 0);
+        randomiser_value1        : IN std_logic_vector(7 DOWNTO 0);
+        pipe_x_pos               : OUT std_logic_vector(10 DOWNTO 0);
+        pipe_y_pos               : OUT std_logic_vector(9 DOWNTO 0);
+        pipe_r, pipe_b, pipe_g   : OUT std_logic_vector(3 DOWNTO 0);
+        pipe_on, pipe_enable,
+        pipe_passed              : OUT std_logic
+    );
 END pipe;
 
-architecture behavior of pipe is
-SIGNAL pipe_gap_on			: std_logic;
-SIGNAL pipe_width_radius	: std_logic_vector(10 DOWNTO 0);
-SIGNAL pipe_height_radius  : std_logic_vector(9 DOWNTO 0);
-SIGNAL gap_constant			: std_logic_vector (9 DOWNTO 0);
-SIGNAL pipe_x_temp_pos		: std_logic_vector (10 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(639, 11);
-SIGNAL pipe_y_temp_pos		: std_logic_vector (9 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(479 - 200, 10);
-SIGNAL pipe_gap_pos		   : std_logic_vector (9 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(479 - 200, 10);
-SIGNAL started					: std_logic:= '0';
-SIGNAL pipe_on_sig        : std_logic;
+ARCHITECTURE behavior OF pipe IS
 
-SIGNAL rom_address : std_logic_vector(12 downto 0);
-SIGNAL rom_data    : std_logic_vector(3 downto 0);
-SIGNAL sprite_x, sprite_y : integer;
+    SIGNAL pipe_gap_on        : std_logic;
+    SIGNAL pipe_width_radius  : unsigned(10 DOWNTO 0) := to_unsigned(10, 11);   -- width = 20
+    SIGNAL pipe_height_radius : unsigned(9 DOWNTO 0)  := to_unsigned(200, 10);  -- height = 400
+    SIGNAL gap_constant       : unsigned(9 DOWNTO 0)  := to_unsigned(50, 10);
 
-BEGIN           
+    SIGNAL pipe_x_temp_pos    : unsigned(10 DOWNTO 0) := to_unsigned(639, 11);
+    SIGNAL pipe_y_temp_pos    : unsigned(9 DOWNTO 0)  := to_unsigned(479 - 200, 10);
+    SIGNAL pipe_gap_pos       : unsigned(9 DOWNTO 0)  := to_unsigned(479 - 200, 10);
 
-gap_constant <= CONV_STD_LOGIC_VECTOR(50, 10) ; 
-pipe_width_radius <= CONV_STD_LOGIC_VECTOR(10, 11); -- pipe width is 20 pixels 
-pipe_height_radius <= CONV_STD_LOGIC_VECTOR(200, 10); -- pipe height is 400 pixels 
-    
--- Determine the pixels where the pipe should be drawn 
-pipe_gap_on <= '1' when (('0' & pipe_x_temp_pos <= '0' & pixel_column + pipe_width_radius) 
-								and ('0' & pixel_column <= '0' & pipe_x_temp_pos + pipe_width_radius) 
-								and ('0' & pipe_gap_pos <= '0' & pixel_row + gap_constant) 
-								and ('0' & pixel_row <= '0' & pipe_gap_pos + gap_constant))
-					else
-				'0';
-				
-pipe_on_sig <= '1' when ( ('0' & pipe_x_temp_pos <= '0' & pixel_column + pipe_width_radius) 
-                    and ('0' & pixel_column <= '0' & pipe_x_temp_pos + pipe_width_radius)
-                    and ('0' & pipe_y_temp_pos <= '0' & pixel_row + pipe_height_radius) 
-                    and ('0' & pixel_row <= '0' & pipe_y_temp_pos + pipe_height_radius)
-                    and pipe_gap_on = '0')  
-               else '0';
-				
-pipe_on <= pipe_on_sig;
+    SIGNAL started            : std_logic := '0';
+    SIGNAL pipe_on_sig        : std_logic;
 
--- ROM INSTANTIATION
-PIPE_ROM_INST : entity work.pipe_rom
-    port map(
-        address => rom_address,
-        clock   => clk,
-        q       => rom_data
-    );
+    SIGNAL rom_address        : std_logic_vector(12 DOWNTO 0);
+    SIGNAL rom_data           : std_logic_vector(3 DOWNTO 0);
+    SIGNAL sprite_x, sprite_y : integer;
 
---Address calculation
-sprite_x <= CONV_INTEGER(pixel_column) - CONV_INTEGER(pipe_x_temp_pos(9 downto 0)) + 10;
-sprite_y <= CONV_INTEGER(pixel_row) - CONV_INTEGER(pipe_y_temp_pos) + 200;
+BEGIN
 
-rom_address <= CONV_STD_LOGIC_VECTOR(sprite_y * 20 + sprite_x, 13)
-               when (sprite_x >= 0 and sprite_x < 20 and
-                     sprite_y >= 0 and sprite_y < 400)
-               else (others => '0');
+    -- Gap region
+    pipe_gap_on <= '1' WHEN
+        (pipe_x_temp_pos <= unsigned(pixel_column) + pipe_width_radius AND
+         unsigned(pixel_column) <= pipe_x_temp_pos + pipe_width_radius AND
+         pipe_gap_pos <= unsigned(pixel_row) + gap_constant AND
+         unsigned(pixel_row) <= pipe_gap_pos + gap_constant)
+        ELSE '0';
 
--- Colour outputs
-pipe_r <= rom_data when pipe_on_sig = '1' else "0000";
-pipe_g <= ('0' & rom_data(3 downto 1)) when pipe_on_sig = '1' else "0000";
-pipe_b <= "0000";
+    -- Pipe body (excluding gap)
+    pipe_on_sig <= '1' WHEN
+        (pipe_x_temp_pos <= unsigned(pixel_column) + pipe_width_radius AND
+         unsigned(pixel_column) <= pipe_x_temp_pos + pipe_width_radius AND
+         pipe_y_temp_pos <= unsigned(pixel_row) + pipe_height_radius AND
+         unsigned(pixel_row) <= pipe_y_temp_pos + pipe_height_radius AND
+         pipe_gap_on = '0')
+        ELSE '0';
 
-Move_Pipe: process (vert_sync) 
-VARIABLE pipe_x_motion: std_logic_vector(10 DOWNTO 0):= -CONV_STD_LOGIC_VECTOR(1, 11); 	
-VARIABLE starting_pos: std_logic_vector (10 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(639, 11); 
-VARIABLE end_pos: std_logic_vector (10 DOWNTO 0):= CONV_STD_LOGIC_VECTOR(0, 11); 
+    pipe_on <= pipe_on_sig;
 
-begin
-	-- Move ball once every vertical sync
-	if (rising_edge(vert_sync) and (enable = '1')) then
-	
-		-- So that pipes still move after they have been started
-		  if (start = '1') then
-            started <= '1';
-				pipe_enable <= '1';
-		  else 
-				pipe_enable <= '0';
-        end if;
-	
-		 if (start = '1' or started = '1') then
-			  -- Check if pipe has moved off the screen, if so reset to starting position and generate new gap position
-			  if (pipe_x_temp_pos <= end_pos) then
-					pipe_x_temp_pos <= starting_pos;
-					pipe_gap_pos <= CONV_STD_LOGIC_VECTOR(100, 10) + ("00" & randomiser_value1);	
-			  else
-				-- Horizontal scroll: Moving pipes to the left of the screen
-					pipe_x_temp_pos <= pipe_x_temp_pos + pipe_x_motion;
+    -- ROM
+    PIPE_ROM_INST : ENTITY work.pipe_rom
+        PORT MAP (
+            address => rom_address,
+            clock   => clk,
+            q       => rom_data
+        );
 
-					--Check if bird has passed the ball (Pipe RHS has smaller x position than bird LHS x position)
-					if (pipe_x_temp_pos + pipe_width_radius < CONV_STD_LOGIC_VECTOR(479 - 8, 11)) then
-						pipe_passed <= '1';
-					else
-						pipe_passed <= '0';
-					end if;
-			  end if;
-			  
-		 end if;
-	end if;
+    -- Sprite coordinates
+    sprite_x <= to_integer(unsigned(pixel_column)) - to_integer(pipe_x_temp_pos(9 DOWNTO 0)) + 10;
+    sprite_y <= to_integer(unsigned(pixel_row))    - to_integer(pipe_y_temp_pos) + 200;
 
-end process Move_Pipe;
+    rom_address <= std_logic_vector(
+                       to_unsigned(sprite_y * 20 + sprite_x, 13)
+                   ) WHEN (sprite_x >= 0 AND sprite_x < 20 AND
+                           sprite_y >= 0 AND sprite_y < 400)
+                   ELSE (OTHERS => '0');
 
--- Assign to outputs
-pipe_x_pos <= pipe_x_temp_pos;
-pipe_y_pos <= pipe_y_temp_pos;
+    -- Colours
+    pipe_r <= rom_data                   WHEN pipe_on_sig = '1' ELSE "0000";
+    pipe_g <= '0' & rom_data(3 DOWNTO 1) WHEN pipe_on_sig = '1' ELSE "0000";
+    pipe_b <= "0000";
+
+    -- Movement
+    Move_Pipe : PROCESS(vert_sync)
+        VARIABLE starting_pos : unsigned(10 DOWNTO 0) := to_unsigned(639, 11);
+        VARIABLE end_pos      : unsigned(10 DOWNTO 0) := to_unsigned(0, 11);
+    BEGIN
+        IF rising_edge(vert_sync) AND enable = '1' THEN
+
+            IF start = '1' THEN
+                started     <= '1';
+                pipe_enable <= '1';
+            ELSE
+                pipe_enable <= '0';
+            END IF;
+
+            IF start = '1' OR started = '1' THEN
+
+                IF pipe_x_temp_pos = end_pos THEN
+                    pipe_x_temp_pos <= starting_pos;
+                    pipe_gap_pos    <= to_unsigned(100, 10) +
+                                       unsigned("00" & randomiser_value1);
+                ELSE
+                    -- scroll left by 1
+                    pipe_x_temp_pos <= pipe_x_temp_pos - 1;
+
+                    -- passed check: RHS of pipe < bird x (479 - 8)
+                    IF pipe_x_temp_pos + pipe_width_radius <
+                       to_unsigned(479 - 8, 11) THEN
+                        pipe_passed <= '1';
+                    ELSE
+                        pipe_passed <= '0';
+                    END IF;
+                END IF;
+
+            END IF;
+        END IF;
+    END PROCESS;
+
+    -- Outputs
+    pipe_x_pos <= std_logic_vector(pipe_x_temp_pos);
+    pipe_y_pos <= std_logic_vector(pipe_y_temp_pos);
 
 END behavior;
