@@ -7,9 +7,9 @@ use ieee.numeric_std.all;
 
 ENTITY collision IS
 	PORT
-		( clk, vert_sync, ball_on, pipe_on	: IN std_logic;
-          ball_y_pos, ball_size	: IN std_logic_vector(9 DOWNTO 0);
-		  collision, pipe_start, ball_enable: OUT std_logic);		
+		( clk, vert_sync, bird_bc_on, pipe_on	: IN std_logic;
+          bird_bc_y_pos, bird_bc_size	: IN std_logic_vector(9 DOWNTO 0);
+		  collision, pipe_start, bird_bc_enable: OUT std_logic);		
 END collision;
 
 architecture behavior of collision is
@@ -27,7 +27,7 @@ BEGIN
 Check_Collision: process (clk) 
 
 begin
-	-- Move ball once every clk cycle
+	-- Move bird_bc once every clk cycle
 	if (rising_edge(clk)) then
 	
 		if (reset = '1') then
@@ -39,11 +39,11 @@ begin
 				collision_temp <= '0';
 			
 			-- if collision detected with pipes or ceiling
-			elsif ((ball_y_pos <= ball_size) or (ball_on = '1' and pipe_on = '1')) then
+			elsif ((bird_bc_y_pos <= bird_bc_size) or (bird_bc_on = '1' and pipe_on = '1')) then
 				collision_temp <= '1';
 		
 			-- bird hits bottom = dead
-			elsif ( ('0' & ball_y_pos >= CONV_STD_LOGIC_VECTOR(479,10) - ball_size) ) then
+			elsif ( ('0' & bird_bc_y_pos >= CONV_STD_LOGIC_VECTOR(479,10) - bird_bc_size) ) then
 				-- We have hit the bottom => stay still (move zero pixels)
 					collision_temp <= '0'; -- CHANGE LATER (make this a death signal)
 			end if;
@@ -73,7 +73,7 @@ begin
 		if (reset = '1') then
 			collision_per_frame <= '0';
 			pipe_start <= '1';
-			ball_enable <= '1';
+			bird_bc_enable <= '1';
 			
 		else 
 			-- if the collision temp is 1 then pull it down to zero
@@ -81,10 +81,10 @@ begin
 			
 			if (collision_temp = '1') then
 				pipe_start <= '0';
-				ball_enable <= '0';
+				bird_bc_enable <= '0';
 			else 
 				pipe_start <= '1';
-				ball_enable <= '1';
+				bird_bc_enable <= '1';
 			end if;
 			
 		end if;

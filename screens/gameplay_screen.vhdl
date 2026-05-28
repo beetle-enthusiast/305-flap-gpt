@@ -75,16 +75,16 @@ signal r_mode,g_mode,b_mode : std_logic_vector(3 downto 0 );
 --SIGNALS ADDED
   signal red_in, green_in, blue_in : std_logic_vector (3 downto 0);
 
---Signals for bird
-  signal bird_r, bird_g, bird_b : std_logic_vector (3 downto 0);
-  SIGNAL bird_on : std_logic;
-  signal bird_enable: std_logic;
+--Signals for bird_bc
+  signal bird_bc_r, bird_bc_g, bird_bc_b : std_logic_vector (3 downto 0);
+  SIGNAL bird_bc_on : std_logic;
+  signal bird_bc_enable: std_logic;
   signal size				: std_logic_vector(9 DOWNTO 0);
 
   --Signals for collision
   SIGNAL collision				: std_logic:= '0';
-  SIGNAL pipe_x_pos, ball_x_pos : std_logic_vector(10 downto 0);
-  SIGNAL pipe_y_pos, ball_y_pos : std_logic_vector(9 DOWNTO 0);
+  SIGNAL pipe_x_pos, bird_bc_x_pos : std_logic_vector(10 downto 0);
+  SIGNAL pipe_y_pos, bird_bc_y_pos : std_logic_vector(9 DOWNTO 0);
 
   --Signals for pipe
 signal pipe2_start, pipe3_start,
@@ -111,7 +111,7 @@ signal pipe_r, pipe_g, pipe_b    : std_logic_vector(3 downto 0);
   SIGNAL bean1_y_pos, bean2_y_pos: std_logic_vector(9 DOWNTO 0);
   SIGNAL bean2_start: std_logic;
   SIGNAL bean_enable, bean1_enable, bean2_enable: std_logic;	
-  SIGNAL bean_on_temp, bean1_on_temp, bean2_on_temp: std_logic; -- FOR TESTING
+  SIGNAL bean_on, bean_on_temp, bean1_on_temp, bean2_on_temp: std_logic; -- FOR TESTING
 
 
 -- SIGNALS ADDED ENDS
@@ -125,7 +125,7 @@ begin
     );
 		score <= points;
 
-    ball_enable <= '1';
+    bird_bc_enable <= '1';
 		pipe_start  <= '1';
 
     -- FOR NOW assigning outputs to score, level and lives 
@@ -271,28 +271,29 @@ HEART3 : entity work.heart
 
 
     -- ADDED COMPONENTS
-    --For ball movement
-    -- Instantiate BOUNCY_BALL component
-    BOUNCY_BALL_COMPONENT: entity work.bouncy_ball
-    PORT MAP (enable=> ball_enable, 
+    --For bird_bc movement
+    -- Instantiate bird_bc component
+    bird_bc_COMPONENT: entity work.bird_bc
+    PORT MAP (enable=> bird_bc_enable, 
             click => left_click, 
             clk => clock_25Mhz, 
             vert_sync => vert_sync,
             pixel_row => pixel_row, 
             pixel_column => pixel_column,
-            ball_on_out => ball_on, 
-            red => ball_r, 
-            green => ball_g, 
-            blue => ball_b,
-            ball_y_pos => ball_y_pos,
-            ball_x_pos => ball_x_pos,
+            bird_bc_on_out => bird_bc_on, 
+            red => bird_bc_r, 
+            green => bird_bc_g, 
+            blue => bird_bc_b,
+            bird_bc_y_pos => bird_bc_y_pos,
+            bird_bc_x_pos => bird_bc_x_pos,
             size => size);
     
     --LFSR for random pipe gap position
     LFSR_COMPONENT: entity work.lfsr
     PORT MAP (clk => clock_25Mhz, 
             enable => pipe_enable, 
-            random_value => randomiser_value);
+            random_value1 => randomiser_value1,
+				random_value2 => randomiser_value2);
 
     -- For pipe movement
     -- Instantiate PIPE component
@@ -348,13 +349,13 @@ HEART3 : entity work.heart
   COLLISION_COMPONENT: entity work.collision
   PORT MAP (clk => clock_25Mhz,
         vert_sync => vert_sync,
-		  ball_on => ball_on,
+		  bird_bc_on => bird_bc_on,
 		  pipe_on => pipe_on,
-        ball_y_pos => ball_y_pos,
-        ball_size => size,
+        bird_bc_y_pos => bird_bc_y_pos,
+        bird_bc_size => size,
         collision => collision
 		--   pipe_start => pipe_start,
-		--   ball_enable => ball_enable
+		--   bird_bc_enable => bird_bc_enable
     );
 
 -- ADDITIONAL COMPOENNETS END
@@ -461,7 +462,7 @@ end process;
   Video_on_proc : process(clock_25Mhz)
   begin 
       if rising_edge(clock_25Mhz)then 
-          if (box_on = '1' or pipe_on = '1' or ball_on = '1') then video_on <= '1'; else video_on <= '0'; end if;
+          if (box_on = '1' or pipe_on = '1' or bird_bc_on = '1') then video_on <= '1'; else video_on <= '0'; end if;
       end if; 
   end process;
 
@@ -476,10 +477,10 @@ begin
             red_out <= pipe_r;
             green_out <= pipe_g;
             blue_out <= pipe_b;
-        elsif ball_on = '1' then 
-            red_out <= ball_r;
-            green_out <= ball_g;
-            blue_out <= ball_b;
+        elsif bird_bc_on = '1' then 
+            red_out <= bird_bc_r;
+            green_out <= bird_bc_g;
+            blue_out <= bird_bc_b;
         else 
             red_out <= "0000";
             green_out <= "0000";
