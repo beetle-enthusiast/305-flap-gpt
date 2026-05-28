@@ -121,9 +121,7 @@ begin
     box_b <= "0000" when box_on = '1' else "0000";
 
     ball_enable <= '1';
-pipe_start  <= '1';
-    -- hard code player dead when collison
-    player_dead <= collision;
+		pipe_start  <= '1';
     -- FOR NOW assigning outputs to score, level and lives 
     score <= score_int;
     level <= level_int;
