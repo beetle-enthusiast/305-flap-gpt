@@ -101,11 +101,14 @@ signal pipe_r, pipe_g, pipe_b    : std_logic_vector(3 downto 0);
   signal randomiser_value2 : std_logic_vector (7 downto 0);
 
   --Signals for coffee bean
-  signal bean_r, bean_g, bean_b : std_logic_vector(3 downto 0);
-  SIGNAL bean_x_pos: std_logic_vector(10 DOWNTO 0);
-  SIGNAL bean_y_pos: std_logic_vector(9 DOWNTO 0);
-  SIGNAL bean_enable: std_logic;	
-  SIGNAL bean_on_temp: std_logic; -- FOR TESTING
+  SIGNAL bean_r, bean_g, bean_b : std_logic_vector(3 downto 0);
+  SIGNAL bean1_r, bean1_g, bean1_b : std_logic_vector(3 downto 0);
+  SIGNAL bean2_r, bean2_g, bean2_b : std_logic_vector(3 downto 0);
+  SIGNAL bean1_x_pos, bean2_x_pos: std_logic_vector(10 DOWNTO 0);
+  SIGNAL bean1_y_pos, bean2_y_pos: std_logic_vector(9 DOWNTO 0);
+  SIGNAL bean2_start: std_logic;
+  SIGNAL bean_enable, bean1_enable, bean2_enable: std_logic;	
+  SIGNAL bean_on_temp, bean1_on_temp, bean2_on_temp: std_logic; -- FOR TESTING
 -- SIGNALS ADDED ENDS
 
 begin
@@ -357,26 +360,50 @@ HEART3 : entity work.heart
 		--   ball_enable => ball_enable
         );
 
-    COFFEE_BEAN_COMPONENT: entity work.coffee_bean
+    COFFEE_BEAN1_COMPONENT: entity work.coffee_bean
     PORT MAP (enable => pipe_start, 
                   vert_sync => vert_sync, 
                   start=> '1', 
+						pipe_on => pipe_on,
                   pixel_row => pixel_row, 
                   pixel_column => pixel_column,
 						randomiser_value_y => randomiser_value2,
-						bean_r => bean_r,
-						bean_g => bean_g,
-						bean_b => bean_b,
-                  bean_x_pos => bean_x_pos,
-                  bean_y_pos => bean_y_pos,
-                  bean_on => bean_on_temp,
-                  bean_enable => bean_enable);
+						bean_r => bean1_r,
+						bean_g => bean1_g,
+						bean_b => bean1_b,
+                  bean_x_pos => bean1_x_pos,
+                  bean_y_pos => bean1_y_pos,
+                  bean_on => bean1_on_temp,
+                  bean_enable => bean1_enable);
+						
+						
+	 COFFEE_BEAN2_COMPONENT: entity work.coffee_bean
+    PORT MAP (enable => pipe_start, 
+                  vert_sync => vert_sync, 
+                  start=> bean2_start, 
+						pipe_on => pipe_on,
+                  pixel_row => pixel_row, 
+                  pixel_column => pixel_column,
+						randomiser_value_y => randomiser_value2,
+						bean_r => bean2_r,
+						bean_g => bean2_g,
+						bean_b => bean2_b,
+                  bean_x_pos => bean2_x_pos,
+                  bean_y_pos => bean2_y_pos,
+                  bean_on => bean2_on_temp,
+                  bean_enable => bean2_enable);
 
 -- ADDITIONAL COMPOENNETS END
 
 pipe_r <= pipe1_r or pipe2_r or pipe3_r;
 pipe_g <= pipe1_g or pipe2_g or pipe3_g;
 pipe_b <= pipe1_b or pipe2_b or pipe3_b;
+
+
+bean_r <= bean1_r or bean2_r;
+bean_g <= bean1_g or bean2_g;
+bean_b <= bean1_b or bean2_b;
+
 
 
 
@@ -393,6 +420,16 @@ pipe_b <= pipe1_b or pipe2_b or pipe3_b;
   pipe_on <= pipe1_on or pipe2_on or pipe3_on;
   
   pipe_enable <= pipe1_enable or pipe2_enable or pipe3_enable;
+  
+  
+  -- Coffee Logic				 
+  bean2_start<= '1' when bean1_x_pos <= std_logic_vector(to_unsigned(425, 11))
+						  else 
+					 '0';
+		
+  bean_on_temp <= bean1_on_temp or bean2_on_temp;
+  
+  bean_enable <= bean1_enable or bean2_enable;
 
 
 
@@ -401,27 +438,31 @@ g_mode <= g_training when mode = '0' else g_sp;
 b_mode <= b_training when mode = '0' else b_sp;
 
 
-red_in   <= pipe_r when pipe_on = '1' else ball_r when ball_on = '1' else bean_g when bean_on_temp = '1' else "0000";
+red_in   <= pipe_r when pipe_on = '1' else ball_r when ball_on = '1' else bean_r when bean_on_temp = '1' else "0000";
 green_in <= pipe_g when pipe_on = '1' else ball_g when ball_on = '1' else bean_g when bean_on_temp = '1' else "0000";
-blue_in  <= pipe_b when pipe_on = '1' else ball_b when ball_on = '1' else bean_g when bean_on_temp = '1' else "0000";
+blue_in  <= pipe_b when pipe_on = '1' else ball_b when ball_on = '1' else bean_b when bean_on_temp = '1' else "0000";
 
-red_out   <= box_r or r_score or r_level or r_heart1 or r_heart2 or r_heart3 or bean_r or r_mode when box_on = '1' else red_in;
-green_out <= box_g or g_score or g_level or g_heart1 or g_heart2 or g_heart3 or bean_g or g_mode when box_on = '1' else green_in;
-blue_out  <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or bean_b or b_mode when box_on = '1' else blue_in;
+--red_out   <= box_r or r_score or r_level or r_heart1 or r_heart2 or r_heart3 or bean_r or r_mode when box_on = '1' else red_in;
+--green_out <= box_g or g_score or g_level or g_heart1 or g_heart2 or g_heart3 or bean_g or g_mode when box_on = '1' else green_in;
+--blue_out  <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or bean_b or b_mode when box_on = '1' else blue_in;
 
+red_out   <= "0000";
+green_out <= "1111" when bean_on_temp = '1' else "0000";
+blue_out  <= "0000";
 
+video_on <= '1';
 
-  video_on <= '1' when (
-    box_on = '1' or
-    pipe_on = '1' or
-    ball_on = '1' or
-    r_score /= "0000" or g_score /= "0000" or b_score /= "0000" or
-    r_level /= "0000" or g_level /= "0000" or b_level /= "0000" or
-    r_heart1 /= "0000" or g_heart1 /= "0000" or b_heart1 /= "0000" or
-    r_heart2 /= "0000" or g_heart2 /= "0000" or b_heart2 /= "0000" or
-    r_heart3 /= "0000" or g_heart3 /= "0000" or b_heart3 /= "0000" or
-    r_mode /= "0000" or g_mode /= "0000" or b_mode /= "0000" 
-) else '0';
+--  video_on <= '1' when (
+--    box_on = '1' or
+--    pipe_on = '1' or
+--    ball_on = '1' or
+--    r_score /= "0000" or g_score /= "0000" or b_score /= "0000" or
+--    r_level /= "0000" or g_level /= "0000" or b_level /= "0000" or
+--    r_heart1 /= "0000" or g_heart1 /= "0000" or b_heart1 /= "0000" or
+--    r_heart2 /= "0000" or g_heart2 /= "0000" or b_heart2 /= "0000" or
+--    r_heart3 /= "0000" or g_heart3 /= "0000" or b_heart3 /= "0000" or
+--    r_mode /= "0000" or g_mode /= "0000" or b_mode /= "0000" 
+--) else '0';
 
 
 --TESTING

@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 
 ENTITY coffee_bean IS
 	PORT
-		(enable, start, vert_sync	: IN std_logic;
+		(enable, start, vert_sync, pipe_on	: IN std_logic;
         pixel_row, pixel_column	: IN std_logic_vector(9 DOWNTO 0);
 			randomiser_value_y: IN std_logic_vector(7 DOWNTO 0);
 			bean_r: OUT std_logic_vector(3 DOWNTO 0);
@@ -61,8 +61,9 @@ begin
 		if (start = '1' or started = '1') then
             if (bean_x_temp_pos <= end_pos) then
 					 -- Determine the bean position using lfsr everytime we are at the end
-					bean_y_temp_pos <= unsigned(randomiser_value_y & "00");                
-					bean_x_temp_pos <= starting_pos;
+							bean_y_temp_pos <= to_unsigned(to_integer(unsigned(randomiser_value_y)) mod (480 - to_integer(bean_size)), 10);
+
+							bean_x_temp_pos <= starting_pos;
             else
                 -- Moving beans to the left of the screen every VGA sync
                 bean_x_temp_pos <= bean_x_temp_pos -1 ;
