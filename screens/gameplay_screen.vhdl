@@ -20,7 +20,7 @@ ENTITY GAMEPLAY_SCREEN IS
         is_high_score : out STD_LOGIC;
         score : out integer range 0 to 999;
         level : out integer range 1 to 3;
-        lives : out integer range 0 to 3;
+        lives : out integer range 0 to 3; -- Is probably not needed
         video_on : OUT STD_LOGIC;
         red_out, green_out, blue_out : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
     );
@@ -223,10 +223,6 @@ pipe_start  <= '1';
     green_out => g_sp,
     blue_out => b_sp
     );
-
-    heart1_vis <= '1' when lives_int >= 1 else '0';
-    heart2_vis <= '1' when lives_int >= 2 else '0';
-    heart3_vis <= '1' when lives_int >= 3 else '0';
     
     -- Hearts for lives : 
    HEART1 : entity work.heart
@@ -355,7 +351,7 @@ HEART3 : entity work.heart
         collision => collision
 		--   pipe_start => pipe_start,
 		--   ball_enable => ball_enable
-        );
+    );
 
 -- ADDITIONAL COMPOENNETS END
 
@@ -376,12 +372,6 @@ pipe_b <= pipe1_b or pipe2_b or pipe3_b;
   pipe_on <= pipe1_on or pipe2_on or pipe3_on;
   
   pipe_enable <= pipe1_enable or pipe2_enable or pipe3_enable;
-  	 
-
-
-
-
-
 
 
 
@@ -409,6 +399,58 @@ blue_out  <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or 
     r_heart3 /= "0000" or g_heart3 /= "0000" or b_heart3 /= "0000" or
     r_mode /= "0000" or g_mode /= "0000" or b_mode /= "0000" 
 ) else '0';
+
+
+
+	DECR_LIVES: process(clk)
+		variable has_collided : std_logic := '0';
+	begin
+		if rising_edge(clk) then
+			-- Lives only decrement in SP mode
+			if (mode = '1') then
+				if (collision = '1') and (has_collided = '0') then
+					lives_int <= lives_int - 1;
+					has_collided := '1';
+				end if;
+
+				if (collision = '0') then
+					has_collided := '0';
+				end if;
+
+				case lives_int is
+					when 0 => 
+						player_dead <= '1';
+					when 1 => 
+						heart1_vis <= '1';
+						heart2_vis <= '0';
+						heart3_vis <= '0'
+					when 2 => 
+						heart1_vis <= '1';
+						heart2_vis <= '1';
+						heart3_vis <= '0'
+					when 3 => 
+						heart1_vis <= '1';
+						heart2_vis <= '1';
+						heart3_vis <= '1';
+					when others => -- Made this weird to catch bugs lol
+						heart1_vis <= '1';
+						heart2_vis <= '0';
+						heart3_vis <= '1';
+				end case;
+			end if;
+		end if;
+	end process;
+
+
+	RESET_GAME: process(clk)
+	begin
+		if rising_edge(clk) then
+			if (reset = '1') then
+				lives_int <= 3;
+			end if;
+		end if;
+	end process;
+
 
 END a;
 
