@@ -10,7 +10,7 @@ entity flappy_bird is
   port (
     CLOCK_50  : in  std_logic;
     LEDR      : out std_logic_vector(9 downto 0);
-    HEX3, HEX2, HEX1, HEX0  : out std_logic_vector(6 downto 0);
+    HEX5, HEX4, HEX3, HEX2, HEX1, HEX0  : out std_logic_vector(6 downto 0);
     PS2_CLK, PS2_DAT  : inout std_logic;
    
     SW : in std_logic_vector(9 downto 0);
@@ -25,11 +25,6 @@ end flappy_bird;
 
 architecture hw_interface of flappy_bird is
 
-  -- TEMPORARY: DELETE ONCE DDONE
-  -- signal CLOCK_50 : std_logic;
-
-
-
   signal CLOCK_25       : std_logic;
   signal PLAY, RESTART  : std_logic;
   signal MODE           : std_logic;
@@ -37,7 +32,7 @@ architecture hw_interface of flappy_bird is
   signal state          : game_state;
   signal game_mode      : std_logic;
   signal game_reset, game_pause   : std_logic;
-  signal player_dead    : std_logic;
+  signal player_dead    : std_logic := '0';
 
 
   signal mouse_data, mouse_clk    : std_logic;
@@ -72,7 +67,7 @@ architecture hw_interface of flappy_bird is
   signal game_video_on : std_logic;
   signal current_score : integer range 0 to 999;
   signal current_level : integer range 1 to 3;
-  signal current_lives : integer range 0 to 3;
+  signal current_lives : integer range 0 to 3 := 3;
   signal is_high_score : std_logic;
 
 
@@ -87,12 +82,12 @@ architecture hw_interface of flappy_bird is
   signal gameover_screen_click : std_logic;
 
   -- Gated the mouse clicks
-
- signal gate_left_click  : std_logic;
-signal gate_start_click : std_logic;
-
+  signal gate_left_click  : std_logic;
+  signal gate_start_click : std_logic;
 
 
+  -- BCD 7-seg inputs
+  signal bcd : binary_coded_decimal;
 
 
   component pll_25mhz is
@@ -175,7 +170,7 @@ begin
   gate_left_click  <= left_click when state = PLAY_GAME else '0';
   gate_start_click <= left_click when state = START_MENU else '0';
   gameover_clicked <=  gameover_screen_click when state = GAME_OVER else '0';
- PLAY <= not KEY(0) or gate_start_click or gameover_clicked;
+  PLAY <= not KEY(0) or gate_start_click or gameover_clicked;
   RESTART <= not KEY(1);
   MODE <= SW(0);
 
@@ -320,12 +315,53 @@ blue_in <= cursor_b when cursor_on = '1' else
   VGA_VS <= vs;
   
   
+  BIN_TO_BCD: entity work.double_dabble
+  port map (
+		bin => std_logic_vector(to_unsigned(current_lives,7)),
+    dec => bcd
+  );
   
+  SEG0: entity work.BCD_to_SevenSeg
+  port map (
+    BCD_Digit => bcd(0),
+    SevenSeg_out => HEX0
+  );
+  SEG1: entity work.BCD_to_SevenSeg
+  port map (
+    BCD_Digit => bcd(1),
+    SevenSeg_out => HEX1
+  );
+  SEG2: entity work.BCD_to_SevenSeg
+  port map (
+    BCD_Digit => bcd(2),
+    SevenSeg_out => HEX2
+  );
+  SEG3: entity work.BCD_to_SevenSeg
+  port map (
+    BCD_Digit => "0000",
+    SevenSeg_out => HEX3
+  );
+  SEG4: entity work.BCD_to_SevenSeg
+  port map (
+    BCD_Digit => "0000",
+    SevenSeg_out => HEX4
+  );
+  SEG5: entity work.BCD_to_SevenSeg
+  port map (
+    BCD_Digit => "0000",
+    SevenSeg_out => HEX5
+  );
+
 
   -- For testing
+  LEDR(3) <=  '1' when game_mode = '1'
+              else '0';
+  LEDR(2) <=  '1' when player_dead = '1'
+              else '0';
   LEDR(1) <=  '1' when game_pause = '1'
               else '0';
   LEDR(0) <=  '1' when game_reset = '1'
               else '0';
+  
 
   end architecture;

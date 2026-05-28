@@ -29,7 +29,7 @@ END GAMEPLAY_SCREEN;
 ARCHITECTURE a OF GAMEPLAY_SCREEN IS
 
 -- Difficulty controls - 
-signal points : integer range 0 to 127;
+signal points : integer range 0 to 127	:= 0;
 signal scroll_speed : integer range 0 to 15;
 
 SIGNAL box_row_int, box_col_int : integer := 0;
@@ -110,6 +110,7 @@ begin
       points => points,
       scroll_speed => scroll_speed
     );
+		score <= points;
 
     box_row_int <= to_integer(unsigned(pixel_row));
     box_col_int <= to_integer(unsigned(pixel_column));
@@ -400,10 +401,10 @@ blue_out  <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or 
 
 
 
-	DECR_LIVES: process(clk)
+	DECR_LIVES: process(clock_25MHz)
 		variable has_collided : std_logic := '0';
 	begin
-		if rising_edge(clk) then
+		if rising_edge(clock_25MHz) then
 			-- Lives only decrement in SP mode
 			if (mode = '1') then
 				if (collision = '1') and (has_collided = '0') then
@@ -421,11 +422,11 @@ blue_out  <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or 
 					when 1 => 
 						heart1_vis <= '1';
 						heart2_vis <= '0';
-						heart3_vis <= '0'
+						heart3_vis <= '0';
 					when 2 => 
 						heart1_vis <= '1';
 						heart2_vis <= '1';
-						heart3_vis <= '0'
+						heart3_vis <= '0';
 					when 3 => 
 						heart1_vis <= '1';
 						heart2_vis <= '1';
@@ -436,19 +437,14 @@ blue_out  <= box_b or b_score or b_level or b_heart1 or b_heart2 or b_heart3 or 
 						heart3_vis <= '1';
 				end case;
 			end if;
-		end if;
-	end process;
 
-
-	RESET_GAME: process(clk)
-	begin
-		if rising_edge(clk) then
 			if (reset = '1') then
+        player_dead <= '0';
 				lives_int <= 3;
 			end if;
+
 		end if;
 	end process;
-
 
 END a;
 

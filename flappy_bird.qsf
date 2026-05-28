@@ -42,7 +42,7 @@ set_global_assignment -name DEVICE 5CEBA4F23C7
 set_global_assignment -name TOP_LEVEL_ENTITY flappy_bird
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 25.1STD.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "23:38:25  APRIL 25, 2026"
-set_global_assignment -name LAST_QUARTUS_VERSION "18.1.0 Lite Edition"
+set_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Lite Edition"
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
@@ -263,6 +263,10 @@ set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_RO
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_global_assignment -name VHDL_FILE "game-logic/levels.vhdl"
+set_global_assignment -name VHDL_FILE helpers/double_dabble.vhdl
+set_global_assignment -name VHDL_FILE helpers/custom_types.vhdl
+set_global_assignment -name VHDL_FILE helpers/BCD_to_7Seg.vhdl
 set_global_assignment -name VHDL_FILE sprites/pipe_rom.vhd
 set_global_assignment -name VHDL_FILE "vga-display/pipe.vhd"
 set_global_assignment -name VHDL_FILE "vga-display/lfsr.vhd"
@@ -273,7 +277,6 @@ set_global_assignment -name VHDL_FILE screens/pause_screen.vhdl
 set_global_assignment -name VHDL_FILE sprites/heart.vhdl
 set_global_assignment -name VHDL_FILE screens/gameplay_screen.vhdl
 set_global_assignment -name VHDL_FILE screens/start_screen.vhdl
-set_global_assignment -name VHDL_FILE custom_types.vhdl
 set_global_assignment -name VHDL_FILE "game-logic/game_fsm.vhdl"
 set_global_assignment -name VHDL_FILE background/vga_background.vhdl
 set_global_assignment -name QIP_FILE background/background_rom.qip
@@ -286,4 +289,5 @@ set_global_assignment -name VHDL_FILE mouse/mouse.vhdl
 set_global_assignment -name QIP_FILE ip/pll_25mhz.qip
 set_global_assignment -name SIP_FILE ip/pll_25mhz.sip
 set_global_assignment -name QIP_FILE pipe_rom.qip
+set_global_assignment -name SOURCE_FILE db/flappy_bird.cmp.rdb
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
