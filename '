@@ -1,0 +1,29 @@
+Added coffee bean component
+
+# Conflicts:
+#	flappy_bird.vhdl
+#	screens/gameplay_screen.vhdl
+
+
+qqq'
+
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# interactive rebase in progress; onto 987b48d
+# Last commands done (4 commands done):
+#    pick 6c9788c #  Added ttt sprite
+#    pick a9505df # Added coffee bean component
+# Next command to do (1 remaining command):
+#    pick 473cecf # Issues at the moment
+# You are currently rebasing branch 'boshra-game' on '987b48d'.
+#
+# Changes to be committed:
+#	new file:   coffee_bean.vhd
+#	modified:   flappy_bird.qsf
+#	modified:   flappy_bird.vhdl
+#	new file:   game-logic/points.vhd
+#	modified:   screens/gameplay_screen.vhdl
+#	modified:   vga-display/lfsr.vhd
+#	modified:   vga-display/pipe.v

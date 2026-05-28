@@ -273,10 +273,6 @@ GAME_PLAY_SCREEN : entity work.gameplay_screen
     );
 
 
-  
-
-
-
   -- VGA background assignment
 red_in <= cursor_r when cursor_on = '1' else
           start_r when state = START_MENU and start_video_on = '1' else
@@ -310,7 +306,6 @@ blue_in <= cursor_b when cursor_on = '1' else
            b_pause when state = PAUSE_GAME and pause_video_on = '1' else
             b_game when state = PAUSE_GAME and game_video_on = '1' else
           bg_b when state = PAUSE_GAME else
-
            b_gameover when state = GAME_OVER and gameover_video_on = '1' else 
            bg_b when STATE = GAME_OVER else
 			  bg_b;
