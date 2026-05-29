@@ -37,12 +37,12 @@ begin
 			if (collision_reset = '1') then
 				collision_temp <= '0';
 			
-			-- if collision detected with pipes or ceiling
+			-- if collision detected with bird
 			elsif (bird_bc_on = '1' and bean_on = '1') then
 				collision_temp <= '1';
 		
 			end if;
-			
+	
 			-- Create reset pulse only once when collision detected
 			if ((collision_per_frame = '1') and (prev_collision_per_frame = '0')) then
 				collision_reset <= '1';
