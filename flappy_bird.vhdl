@@ -204,7 +204,6 @@ GAME_PLAY_SCREEN : entity work.gameplay_screen
     score => current_score,
     level => current_level,
     lives => current_lives,
-    is_high_score => is_high_score,
     reset => game_reset,
     pause => game_pause,
     player_dead => player_dead,

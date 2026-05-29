@@ -16,8 +16,7 @@ ENTITY GAMEPLAY_SCREEN IS
         left_click : IN std_logic;
         reset : IN STD_LOGIC;
         pause : IN STD_LOGIC;
-        player_dead : OUT STD_LOGIC; 
-        is_high_score : out STD_LOGIC;
+        player_dead : OUT STD_LOGIC;
         score : out integer range 0 to 999;
         level : out integer range 1 to 3;
         lives : out integer range 0 to 3; -- Is probably not needed
@@ -107,10 +106,9 @@ begin
 
     LEVEL_CALC : entity work.levels
     port map (
-      points => points,
+      points => score_int,
       scroll_speed => scroll_speed
     );
-		score <= points;
 
     ball_enable <= '1';
 		pipe_start  <= '1';
@@ -119,9 +117,6 @@ begin
     score <= score_int;
     level <= level_int;
     lives <= lives_int;
-
-    --HARDCODED HIGH SCORE
-    is_high_score <= '0';
 
     process(score_int)
     begin
@@ -442,6 +437,7 @@ begin
 
 	DECR_LIVES: process(clock_25MHz)
 		variable has_collided : std_logic := '0';
+    variable collision_timer  : integer range 0 to 25000000 := 0;
 	begin
 		if rising_edge(clock_25MHz) then
 			-- Lives only decrement in SP mode
@@ -449,10 +445,13 @@ begin
 				if (collision = '1') and (has_collided = '0') then
 					lives_int <= lives_int - 1;
 					has_collided := '1';
+          collision_timer := 25000000;
 				end if;
 
-				if (collision = '0') then
-					has_collided := '0';
+				if (has_collided = '1') and (collision = '0') and (collision_timer /= 0) then
+					collision_timer := collision_timer - 1;
+        elsif (has_collided = '1') and (collision_timer = 0) then
+          has_collided := '0';
 				end if;
 
 				case lives_int is
@@ -480,6 +479,7 @@ begin
 			if (reset = '1') then
         player_dead <= '0';
 				lives_int <= 3;
+        score_int <= 0;
 			end if;
 
 		end if;
