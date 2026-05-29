@@ -48,7 +48,7 @@ SIGNAL r_lives, g_lives, b_lives : std_logic_vector(3 downto 0);
 
 --Signals for lives,score,level
 -- In the signals section, add:
-signal score_int : integer range 0 to 999 := 0;
+signal score_int : integer range 0 to 67 := 0;
 signal level_int : integer range 1 to 3   := 1;
 signal lives_int : integer range 0 to 3   := 3;
 
@@ -90,7 +90,7 @@ signal r_mode,g_mode,b_mode : std_logic_vector(3 downto 0 );
 signal pipe2_start, pipe3_start,
        pipe_on, pipe1_on, pipe2_on, pipe3_on,
        pipe_enable, pipe1_enable, pipe2_enable, pipe3_enable : std_logic;
-  signal pipe_start, pipe_passed: std_logic;
+  signal pipe_start, pipe_passed, pipe1_passed,pipe2_passed, pipe3_passed: std_logic;
   signal pipe1_x_pos, pipe2_x_pos, pipe3_x_pos: std_logic_vector(10 downto 0);
   signal pipe1_y_pos, pipe2_y_pos, pipe3_y_pos: std_logic_vector(9 downto 0);
 
@@ -311,7 +311,7 @@ HEART3 : entity work.heart
 				  pipe_y_pos => pipe1_y_pos,
 				  pipe_on => pipe1_on,
 				  pipe_enable => pipe1_enable,
-                  pipe_passed => pipe_passed);
+               pipe_passed => pipe1_passed);
 				  
 	PIPE2_COMPONENT: entity work.pipe
     PORT MAP (enable => pipe_start,
@@ -328,7 +328,7 @@ HEART3 : entity work.heart
 				  pipe_y_pos => pipe2_y_pos,
 				  pipe_on => pipe2_on,
 				  pipe_enable => pipe2_enable,
-                  pipe_passed => pipe_passed
+                  pipe_passed => pipe2_passed
                   );
 				  
 	PIPE3_COMPONENT: entity work.pipe
@@ -346,7 +346,7 @@ HEART3 : entity work.heart
 				  pipe_y_pos => pipe3_y_pos,
 				  pipe_on => pipe3_on,
 				  pipe_enable => pipe3_enable,
-                  pipe_passed => pipe_passed);
+               pipe_passed => pipe3_passed);
     
 
   COLLISION_COMPONENT: entity work.collision
@@ -359,11 +359,24 @@ HEART3 : entity work.heart
         collision => collision
     );
 
+    GIFT_COLLISION_COMPONENT: entity work.gift_collision
+    PORT MAP (clk => clock_25Mhz,
+        vert_sync => vert_sync,
+            bird_bc_on => bird_bc_on,
+            bean_on => bean_on,
+        bird_bc_y_pos => bird_bc_y_pos,
+        bird_bc_size => size,
+        collision => collision,
+        bean_start => bean_enable,
+        bird_bc_enable => bird_bc_enable
+        bean_hit => bean_hit
+    );
+
     POINTS_COMPONENT: entity work.points
     PORT MAP (vert_sync => vert_sync,
         pipe_passed => pipe_passed,
         coffee_hit => '0', -- For now, will implement later
-        total_points => points
+        total_points => score_int
     );
 	
 
@@ -416,18 +429,33 @@ begin
     pipe_b <= pipe1_b or pipe2_b or pipe3_b;
     pipe_on <=  pipe1_on or pipe2_on or pipe3_on;
     pipe_enable <= pipe1_enable or pipe2_enable or pipe3_enable;
+	 pipe_passed <= pipe1_passed or pipe2_passed or pipe3_passed;
+	
+	if (level_int = 2) then
+		if pipe1_x_pos <= std_logic_vector(to_unsigned(319,11)) then
+			pipe2_start <= '1';
+		else
+			pipe2_start <= '0';
+		end if;
+	end if;
 
-    if pipe2_x_pos <= std_logic_vector(to_unsigned(425,11)) then
-      pipe3_start <= '1';
-    else
-      pipe3_start <= '0';
-    end if;
+	
+	if (level_int = 3) then
+		if pipe1_x_pos <= std_logic_vector(to_unsigned(425,11)) then
+				pipe2_start <= '1';
+		else
+				pipe2_start <= '0';
+		end if;
 
-    if pipe1_x_pos <= std_logic_vector(to_unsigned(425,11)) then
-      pipe2_start <= '1';
-    else
-      pipe2_start <= '0';
-    end if;
+		 if pipe2_x_pos <= std_logic_vector(to_unsigned(425,11)) then
+			pipe3_start <= '1';
+		 else
+			pipe3_start <= '0';
+		 end if;
+		 
+	end if;
+
+    
   end if;
 end process;
 
