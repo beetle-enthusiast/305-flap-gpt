@@ -119,10 +119,10 @@ signal pipe_r, pipe_g, pipe_b    : std_logic_vector(3 downto 0);
 begin
 
     LEVEL_CALC : entity work.levels
-    port map (
-      points => score_int,
-      scroll_speed => scroll_speed
-    );
+	port map (
+    points       => score_int,
+    level_out    => level_int,
+    scroll_speed => scroll_speed);
 
     bird_bc_enable <= '1';
 		pipe_start  <= '1';
@@ -142,14 +142,10 @@ begin
         msg_score(10) <= character'val(score_int mod 10 + 48);
     end process;
 
+	 
     process(level_int)
     begin
         msg_level(8) <= character'val(level_int + 48);
-    end process;
-
-    process(lives_int)
-    begin
-        msg_lives(8) <= character'val(lives_int + 48);
     end process;
 
 
@@ -416,13 +412,11 @@ begin
         
 end process;
 
--- r_mode <= r_training when mode = '0' else r_sp;
--- g_mode <= g_training when mode = '0' else g_sp;
--- b_mode <= b_training when mode = '0' else b_sp;
         
 
 -- Pipe logic 
 Pipe_logic : process(clock_25Mhz)
+
 begin
   if rising_edge(clock_25Mhz) then
     pipe_r <= pipe1_r or pipe2_r or pipe3_r;
