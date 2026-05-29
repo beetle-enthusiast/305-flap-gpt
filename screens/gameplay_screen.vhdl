@@ -29,7 +29,7 @@ END GAMEPLAY_SCREEN;
 ARCHITECTURE a OF GAMEPLAY_SCREEN IS
 
 -- Difficulty controls - 
-signal points : integer range 0 to 127	:= 0;
+signal points : integer range 0 to 67	:= 0;
 signal scroll_speed : integer range 0 to 15;
 
 SIGNAL box_row_int, box_col_int : integer := 0;
@@ -111,7 +111,7 @@ signal pipe_r, pipe_g, pipe_b    : std_logic_vector(3 downto 0);
   SIGNAL bean1_y_pos, bean2_y_pos: std_logic_vector(9 DOWNTO 0);
   SIGNAL bean2_start: std_logic;
   SIGNAL bean_enable, bean1_enable, bean2_enable: std_logic;	
-  SIGNAL bean_on, bean_on_temp, bean1_on_temp, bean2_on_temp: std_logic; -- FOR TESTING
+  SIGNAL bean_on, bean_on_temp, bean1_on_temp, bean2_on_temp, bean_hit: std_logic; -- FOR TESTING
 
 
 -- SIGNALS ADDED ENDS
@@ -120,7 +120,7 @@ begin
 
     LEVEL_CALC : entity work.levels
     port map (
-      points => points,
+      points => score_int,
       scroll_speed => scroll_speed
     );
 
@@ -359,21 +359,22 @@ HEART3 : entity work.heart
         collision => collision
     );
 
-    GIFT_COLLISION_COMPONENT: entity work.gift_collision
-    PORT MAP (clk => clock_25Mhz,
-        vert_sync => vert_sync,
-            bird_bc_on => bird_bc_on,
-            bean_on => bean_on,
-        bird_bc_y_pos => bird_bc_y_pos,
-        bird_bc_size => size,
-        collision => collision,
-        bean_start => bean_enable,
-        bird_bc_enable => bird_bc_enable
-        bean_hit => bean_hit
-    );
+--    GIFT_COLLISION_COMPONENT: entity work.gift_collision
+--    PORT MAP (clk => clock_25Mhz,
+--        vert_sync => vert_sync,
+--            bird_bc_on => bird_bc_on,
+--            bean_on => bean_on,
+--        bird_bc_y_pos => bird_bc_y_pos,
+--        bird_bc_size => size,
+--        collision => collision,
+--        bean_start => bean_enable,
+--        bird_bc_enable => bird_bc_enable,
+--        bean_hit => bean_hit
+--    );
 
     POINTS_COMPONENT: entity work.points
     PORT MAP (vert_sync => vert_sync,
+			previous_points => score_int,
         pipe_passed => pipe_passed,
         coffee_hit => '0', -- For now, will implement later
         total_points => score_int

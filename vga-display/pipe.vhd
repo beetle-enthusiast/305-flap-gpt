@@ -86,75 +86,41 @@ begin
 	end if;
 end process; 
 
-Move_Pipe: process (vert_sync)
-    variable pipe_x_motion : signed(10 downto 0) := to_signed(-1, 11);
-    variable starting_pos  : unsigned(10 downto 0) := to_unsigned(639, 11);
-    variable end_pos       : unsigned(10 downto 0) := to_unsigned(0, 11);
+
+Move_Pipe: process (vert_sync) 
+VARIABLE pipe_x_motion : signed(10 DOWNTO 0)   := to_signed(-1, 11);
+VARIABLE starting_pos  : unsigned(10 DOWNTO 0) := to_unsigned(639, 11);
+VARIABLE end_pos       : unsigned(10 DOWNTO 0) := to_unsigned(0, 11);
+
 begin
-    if rising_edge(vert_sync) and enable = '1' then
+	if (rising_edge(vert_sync) and (enable = '1')) then
+				pipe_passed_temp <= '0'; -- reset pipe passed
+		if (start = '1') then
+           started     <= '1';
+			pipe_enable <= '1';
+		else 
+			pipe_enable <= '0';
+       end if;
+	
+		if (start = '1' or started = '1') then
+			-- Check if pipe has moved off the left of the screen
+			if (pipe_x_temp_pos <= end_pos) then
+				pipe_x_temp_pos <= starting_pos;
+				pipe_gap_pos    <= to_unsigned(100, 10) + unsigned("00" & randomiser_value1);
+			else
+				pipe_x_temp_pos <= unsigned(signed(pipe_x_temp_pos) + pipe_x_motion);
+			end if;
 
-        if start = '1' then
-            started <= '1';
-            pipe_enable <= '1';
-        else
-            pipe_enable <= '0';
-        end if;
-
-        if start = '1' or started = '1' then
-
-            -- wrap around
-            if pipe_x_temp_pos <= end_pos then
-                pipe_x_temp_pos <= starting_pos;
-                pipe_passed_temp <= '0';  -- reset for next pipe
-                pipe_gap_pos <= to_unsigned(100,10) + unsigned("00" & randomiser_value1);
-            else
-                pipe_x_temp_pos <= unsigned(signed(pipe_x_temp_pos) + pipe_x_motion);
-            end if;
-
-            -- one-shot scoring pulse
-            if pipe_x_temp_pos < to_unsigned(200 - 8, 11) then
+			--Detect if ball passed pipe
+			if pipe_x_temp_pos = to_unsigned(200 - 8, 11) then
                 if pipe_passed_temp = '0' then
-                    pipe_passed_temp <= '1';  -- pulse once
+                    pipe_passed_temp <= '1';  -- pulse ONCE
                 end if;
-            end if;
-
-        end if;
-    end if;
-end process;
-
-
---Move_Pipe: process (vert_sync) 
---VARIABLE pipe_x_motion : signed(10 DOWNTO 0)   := to_signed(-1, 11);
---VARIABLE starting_pos  : unsigned(10 DOWNTO 0) := to_unsigned(639, 11);
---VARIABLE end_pos       : unsigned(10 DOWNTO 0) := to_unsigned(0, 11);
---
---begin
---	if (rising_edge(vert_sync) and (enable = '1')) then
---		if (start = '1') then
---            started     <= '1';
---			pipe_enable <= '1';
---		else 
---			pipe_enable <= '0';
---        end if;
---	
---		if (start = '1' or started = '1') then
---			if (pipe_x_temp_pos <= end_pos) then
---				pipe_x_temp_pos <= starting_pos;
---				pipe_passed_temp <= '0'; -- reset pipe passed
---				pipe_gap_pos    <= to_unsigned(100, 10) + unsigned("00" & randomiser_value1);
---			else
---				pipe_x_temp_pos <= unsigned(signed(pipe_x_temp_pos) + pipe_x_motion);
---			end if;
---
---			--Detect if ball passed pipe
---			if (pipe_x_temp_pos < to_unsigned(200 - 8, 11) AND pipe_passed_temp = '0') then
---				pipe_passed_temp <= '1';
---			else
---				pipe_passed_temp <= '0';
---			end if;
---		end if;
---	end if;
---end process Move_Pipe;
+         end if;
+			
+		end if;
+	end if;
+end process Move_Pipe;
 
 pipe_x_pos <= std_logic_vector(pipe_x_temp_pos);
 pipe_y_pos <= std_logic_vector(pipe_y_temp_pos);

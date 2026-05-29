@@ -4,13 +4,14 @@ use ieee.numeric_std.all;
 
 entity levels is
   port (
-    points  : in  integer range 0 to 1023;
+    points  : in  integer range 0 to 67;
     scroll_speed  : out integer range 0 to 15
   );
 end levels;
 
 architecture calc of levels is
-  signal level  : integer range 0 to 7;
+  signal level  : integer range 0 to 3;
+  
 begin
   level <=  1 when (points < 15) else 
             2 when (points < 35) else 
