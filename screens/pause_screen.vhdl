@@ -29,22 +29,6 @@ SIGNAL box_on : std_logic;
 
 SIGNAL box_r, box_g, box_b : std_logic_vector(3 downto 0);
 
--- SIGNAL msg_score : text_string(1 to 9) := "SCORE 000";
--- SIGNAL msg_level : text_string(1 to 7) := "LEVEL 0";
-
-
-
--- SIGNAL r_score, g_score, b_score : std_logic_vector(3 downto 0);
--- SIGNAL r_level, g_level, b_level : std_logic_vector(3 downto 0);
--- SIGNAL r_lives, g_lives, b_lives : std_logic_vector(3 downto 0);
-
--- -- Signals for hearts
--- signal r_heart1, g_heart1, b_heart1 : std_logic_vector(3 downto 0);
--- signal r_heart2, g_heart2, b_heart2 : std_logic_vector(3 downto 0);
--- signal r_heart3, g_heart3, b_heart3 : std_logic_vector(3 downto 0);
-  
--- signal heart1_vis, heart2_vis, heart3_vis : std_logic;
-
 
 begin
 
@@ -67,86 +51,6 @@ begin
     blue_out => b_paused
     );
 
-    --Score, level, lives text
-    --  VGA_TEXT_SCORE : entity work.VGA_TEXT
-    -- port map (
-    -- pixel_row => pixel_row,
-    -- pixel_column => pixel_column,
-    -- clock_25Mhz => clock_25Mhz,
-    -- message => msg_score,
-    -- start_row => 230,
-    -- start_col => 240,
-    -- scale => 2,
-    -- text_r => "1111",
-    -- text_g => "1111",
-    -- text_b => "1111",
-    -- red_out => r_score,
-    -- green_out => g_score,
-    -- blue_out => b_score
-    -- );
-
-    -- heart1_vis <= '1' when lives >= 1 else '0';
-    -- heart2_vis <= '1' when lives >= 2 else '0';
-    -- heart3_vis <= '1' when lives >= 3 else '0';
-    
-    -- Hearts for lives : 
---    HEART1 : entity work.heart
---     port map(
---         pixel_row => pixel_row,
---         pixel_column => pixel_column,
---         clock_25Mhz => clock_25Mhz,
---         start_row => 10,
---         start_col => 10,
---         visible => heart1_vis,
---         red_out => r_heart1,
---         green_out => g_heart1,
---         blue_out => b_heart1
---     );
-
--- HEART2 : entity work.heart
---     port map(
---         pixel_row => pixel_row,
---         pixel_column => pixel_column,
---         clock_25Mhz => clock_25Mhz,
---         start_row => 10,
---         start_col => 40,
---         visible => heart2_vis,
---         red_out => r_heart2,
---         green_out => g_heart2,
---         blue_out => b_heart2
---     );
-
--- HEART3 : entity work.heart
---     port map(
---         pixel_row => pixel_row,
---         pixel_column => pixel_column,
---         clock_25Mhz => clock_25Mhz,
---         start_row => 150,
---         start_col => 70,
---         visible => heart3_vis,
---         red_out => r_heart3,
---         green_out => g_heart3,
---         blue_out => b_heart3
---     );
-
-
-    -- -- Text for level
-    --  VGA_TEXT_LEVEL : entity work.VGA_TEXT
-    -- port map (
-    -- pixel_row => pixel_row,
-    -- pixel_column => pixel_column,
-    -- clock_25Mhz => clock_25Mhz,
-    -- message => msg_level,
-    -- start_row => 310,
-    -- start_col => 240,
-    -- scale => 1,
-    -- text_r => "1111",
-    -- text_g => "1111",
-    -- text_b => "1111",
-    -- red_out => r_level,
-    -- green_out => g_level,
-    -- blue_out => b_level
-    -- );
 
     -- Text for play button
      VGA_TEXT_BUTTON : entity work.VGA_TEXT

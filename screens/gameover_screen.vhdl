@@ -25,7 +25,7 @@ ARCHITECTURE a OF GAMEOVER_SCREEN IS
 
 
 SIGNAL msg_gameover : text_string(1 to 19) := "WOMP WOMP YOU LOSE!";
-signal msg_score : text_string(1 to 10) := "SCORE: 000";
+signal msg_score : text_string(1 to 10) := "SCORE  000";
 SIGNAL msg_highscore : text_string(1 to 15) := "NEW HIGH SCORE!";
 SIGNAL msg_growths : text_string(1 to 28) := "AND HONESTLY - THATS GROWTH!";
 

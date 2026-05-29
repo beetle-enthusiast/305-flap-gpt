@@ -24,7 +24,7 @@ SIGNAL pipe_x_temp_pos     : unsigned(10 DOWNTO 0) := to_unsigned(639, 11);
 SIGNAL pipe_y_temp_pos     : unsigned(9 DOWNTO 0)  := to_unsigned(279, 10);
 SIGNAL pipe_gap_pos        : unsigned(9 DOWNTO 0)  := to_unsigned(279, 10);
 SIGNAL started             : std_logic := '0';
-SIGNAL pipe_on_sig         : std_logic;
+SIGNAL pipe_on_sig, pipe_passed_temp         : std_logic;
 
 signal rom_address : std_logic_vector(12 downto 0);
 signal rom_data    : std_logic_vector(3 downto 0);
@@ -86,20 +86,24 @@ begin
 	end if;
 end process; 
 
+
 Move_Pipe: process (vert_sync) 
 VARIABLE pipe_x_motion : signed(10 DOWNTO 0)   := to_signed(-1, 11);
 VARIABLE starting_pos  : unsigned(10 DOWNTO 0) := to_unsigned(639, 11);
 VARIABLE end_pos       : unsigned(10 DOWNTO 0) := to_unsigned(0, 11);
+
 begin
 	if (rising_edge(vert_sync) and (enable = '1')) then
+				pipe_passed_temp <= '0'; -- reset pipe passed
 		if (start = '1') then
-            started     <= '1';
+           started     <= '1';
 			pipe_enable <= '1';
 		else 
 			pipe_enable <= '0';
-        end if;
+       end if;
 	
 		if (start = '1' or started = '1') then
+			-- Check if pipe has moved off the left of the screen
 			if (pipe_x_temp_pos <= end_pos) then
 				pipe_x_temp_pos <= starting_pos;
 				pipe_gap_pos    <= to_unsigned(100, 10) + unsigned("00" & randomiser_value1);
@@ -108,16 +112,18 @@ begin
 			end if;
 
 			--Detect if ball passed pipe
-			if (pipe_x_temp_pos < to_unsigned(200 - 8, 11)) then
-				pipe_passed <= '1';
-			else
-				pipe_passed <= '0';
-			end if;
+			if pipe_x_temp_pos = to_unsigned(200 - 8, 11) then
+                if pipe_passed_temp = '0' then
+                    pipe_passed_temp <= '1';  -- pulse ONCE
+                end if;
+         end if;
+			
 		end if;
 	end if;
 end process Move_Pipe;
 
 pipe_x_pos <= std_logic_vector(pipe_x_temp_pos);
 pipe_y_pos <= std_logic_vector(pipe_y_temp_pos);
+pipe_passed <= pipe_passed_temp;
 
 END behavior;

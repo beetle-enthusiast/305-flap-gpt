@@ -18,9 +18,9 @@ ENTITY GAMEPLAY_SCREEN IS
         pause : IN STD_LOGIC;
         player_dead : OUT STD_LOGIC; 
         is_high_score : out STD_LOGIC;
-        score : out integer range 0 to 999;
+        score : out integer range 0 to 67;
         level : out integer range 1 to 3;
-        lives : out integer range 0 to 3; -- Is probably not needed
+        lives : out integer range 0 to 3; 
         video_on : OUT STD_LOGIC;
         red_out, green_out, blue_out : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
     );
@@ -29,8 +29,8 @@ END GAMEPLAY_SCREEN;
 ARCHITECTURE a OF GAMEPLAY_SCREEN IS
 
 -- Difficulty controls - 
-signal points : integer range 0 to 127	:= 0;
-signal scroll_speed : integer range 0 to 15;
+signal points : integer range 0 to 67:= 0;
+signal scroll_speed : integer range 0 to 3;
 
 SIGNAL box_row_int, box_col_int : integer := 0;
 SIGNAL box_on : std_logic;
@@ -82,15 +82,16 @@ signal r_mode,g_mode,b_mode : std_logic_vector(3 downto 0 );
   signal size				: std_logic_vector(9 DOWNTO 0);
 
   --Signals for collision
-  SIGNAL collision				: std_logic:= '0';
+  SIGNAL collision, collision_temp, player_dead_temp				: std_logic:= '0';
   SIGNAL pipe_x_pos, bird_bc_x_pos : std_logic_vector(10 downto 0);
   SIGNAL pipe_y_pos, bird_bc_y_pos : std_logic_vector(9 DOWNTO 0);
 
   --Signals for pipe
+  signal pipe1_start : std_logic := '1';
 signal pipe2_start, pipe3_start,
        pipe_on, pipe1_on, pipe2_on, pipe3_on,
        pipe_enable, pipe1_enable, pipe2_enable, pipe3_enable : std_logic;
-  signal pipe_start, pipe_passed: std_logic;
+  signal pipe_start, pipe_passed, pipe1_passed, pipe2_passed, pipe3_passed, gift_passed: std_logic;
   signal pipe1_x_pos, pipe2_x_pos, pipe3_x_pos: std_logic_vector(10 downto 0);
   signal pipe1_y_pos, pipe2_y_pos, pipe3_y_pos: std_logic_vector(9 downto 0);
 
@@ -111,20 +112,23 @@ signal pipe_r, pipe_g, pipe_b    : std_logic_vector(3 downto 0);
   SIGNAL bean1_y_pos, bean2_y_pos: std_logic_vector(9 DOWNTO 0);
   SIGNAL bean2_start: std_logic;
   SIGNAL bean_enable, bean1_enable, bean2_enable: std_logic;	
-  SIGNAL bean_on, bean_on_temp, bean1_on_temp, bean2_on_temp: std_logic; -- FOR TESTING
+  SIGNAL bean_on, bean_on_temp, bean1_on_temp, bean2_on_temp: std_logic; 
+  SIGNAL bean_hit: std_logic := '0'; 
 
 
 -- SIGNALS ADDED ENDS
 
+--Reset
+
+
 begin
 
     LEVEL_CALC : entity work.levels
-    port map (
-      points => points,
-      scroll_speed => scroll_speed
-    );
+	port map (
+    points       => score_int,
+    level_out    => level_int,
+    scroll_speed => scroll_speed);
 
-    bird_bc_enable <= '1';
 		pipe_start  <= '1';
 
     -- FOR NOW assigning outputs to score, level and lives 
@@ -273,7 +277,7 @@ HEART3 : entity work.heart
     --For bird_bc movement
     -- Instantiate bird_bc component
     bird_bc_COMPONENT: entity work.bird_bc
-    PORT MAP (enable=> bird_bc_enable, 
+    PORT MAP (enable=> '1', 
             click => left_click, 
             clk => clock_25Mhz, 
             vert_sync => vert_sync,
@@ -287,17 +291,11 @@ HEART3 : entity work.heart
             bird_bc_x_pos => bird_bc_x_pos,
             size => size);
     
-    --LFSR for random pipe gap position
-    LFSR_COMPONENT: entity work.lfsr
-    PORT MAP (clk => clock_25Mhz, 
-            enable => pipe_enable, 
-            random_value1 => randomiser_value1,
-				random_value2 => randomiser_value2);
 
     -- For pipe movement
     -- Instantiate PIPE component
     PIPE1_COMPONENT: entity work.pipe
-    PORT MAP (enable => pipe_start, 
+    PORT MAP (enable => pipe1_start, 
 				  vert_sync => vert_sync, 
                   clk => clock_25Mhz,
                   pipe_r => pipe1_r,
@@ -311,10 +309,10 @@ HEART3 : entity work.heart
 				  pipe_y_pos => pipe1_y_pos,
 				  pipe_on => pipe1_on,
 				  pipe_enable => pipe1_enable,
-                  pipe_passed => pipe_passed);
+                  pipe_passed => pipe1_passed);
 				  
 	PIPE2_COMPONENT: entity work.pipe
-    PORT MAP (enable => pipe_start,
+    PORT MAP (enable => pipe2_start,
 				  vert_sync => vert_sync, 
 				  start=> pipe2_start, 
                   clk => clock_25Mhz,
@@ -328,7 +326,7 @@ HEART3 : entity work.heart
 				  pipe_y_pos => pipe2_y_pos,
 				  pipe_on => pipe2_on,
 				  pipe_enable => pipe2_enable,
-                  pipe_passed => pipe_passed
+                  pipe_passed => pipe2_passed
                   );
 				  
 	PIPE3_COMPONENT: entity work.pipe
@@ -346,7 +344,7 @@ HEART3 : entity work.heart
 				  pipe_y_pos => pipe3_y_pos,
 				  pipe_on => pipe3_on,
 				  pipe_enable => pipe3_enable,
-                  pipe_passed => pipe_passed);
+                  pipe_passed => pipe3_passed);
     
 
   COLLISION_COMPONENT: entity work.collision
@@ -356,15 +354,75 @@ HEART3 : entity work.heart
 		  pipe_on => pipe_on,
         bird_bc_y_pos => bird_bc_y_pos,
         bird_bc_size => size,
-        collision => collision
+        collision => collision_temp,
+		  death => player_dead_temp
     );
 
-    POINTS_COMPONENT: entity work.points
+     POINTS_COMPONENT: entity work.points
     PORT MAP (vert_sync => vert_sync,
+			previous_points => score_int,
         pipe_passed => pipe_passed,
-        coffee_hit => '0', -- For now, will implement later
-        total_points => points
+        coffee_hit => bean_hit, 
+        total_points => score_int
     );
+
+    LFSR_COMPONENT: entity work.lfsr
+    PORT MAP (clk => clock_25Mhz, 
+              enable => '1',
+              random_value1 => randomiser_value1,
+              random_value2 => randomiser_value2);
+
+BEAN1_COMPONENT: entity work.coffee_bean
+    PORT MAP (
+        enable             => pipe_start,
+        start              => '1',
+        vert_sync          => vert_sync,
+        pipe_on            => '0',
+        clk                => clock_25Mhz,
+        pixel_row          => pixel_row,
+        pixel_column       => pixel_column,
+        randomiser_value_y => randomiser_value2,
+        bean_r             => bean1_r,
+        bean_g             => bean1_g,
+        bean_b             => bean1_b,
+        bean_x_pos         => bean1_x_pos,
+        bean_y_pos         => bean1_y_pos,
+        bean_on            => bean1_on_temp,
+        bean_enable        => bean1_enable
+    );
+
+BEAN2_COMPONENT: entity work.coffee_bean
+    PORT MAP (
+        enable             => pipe_start,
+        start              => '1',
+        vert_sync          => vert_sync,
+        pipe_on            => '0',
+        clk                => clock_25Mhz,
+        pixel_row          => pixel_row,
+        pixel_column       => pixel_column,
+        randomiser_value_y => randomiser_value1,
+        bean_r             => bean2_r,
+        bean_g             => bean2_g,
+        bean_b             => bean2_b,
+        bean_x_pos         => bean2_x_pos,
+        bean_y_pos         => bean2_y_pos,
+        bean_on            => bean2_on_temp,
+        bean_enable        => bean2_enable
+    );
+
+
+       GIFT_COLLISION_COMPONENT: entity work.gift_collision
+   PORT MAP (clk => clock_25Mhz,
+       vert_sync => vert_sync,
+           bird_bc_on => bird_bc_on,
+           bean_on => bean_on,
+       bird_bc_y_pos => bird_bc_y_pos,
+       bird_bc_size => size,
+       collision => gift_passed,
+       bean_start => bean_enable,
+       bird_bc_enable => bird_bc_enable,
+       bean_hit => bean_hit
+   );
 	
 
 -- ADDITIONAL COMPOENNETS END
@@ -402,13 +460,11 @@ begin
         
 end process;
 
--- r_mode <= r_training when mode = '0' else r_sp;
--- g_mode <= g_training when mode = '0' else g_sp;
--- b_mode <= b_training when mode = '0' else b_sp;
         
 
 -- Pipe logic 
 Pipe_logic : process(clock_25Mhz)
+
 begin
   if rising_edge(clock_25Mhz) then
     pipe_r <= pipe1_r or pipe2_r or pipe3_r;
@@ -416,55 +472,70 @@ begin
     pipe_b <= pipe1_b or pipe2_b or pipe3_b;
     pipe_on <=  pipe1_on or pipe2_on or pipe3_on;
     pipe_enable <= pipe1_enable or pipe2_enable or pipe3_enable;
+	 pipe_passed <= pipe1_passed or pipe2_passed or pipe3_passed or gift_passed;
+	
+	if (level_int = 2) then
+		if pipe1_x_pos <= std_logic_vector(to_unsigned(319,11)) then
+			pipe2_start <= '1';
+		else
+			pipe2_start <= '0';
+		end if;
+	end if;
 
-    if pipe2_x_pos <= std_logic_vector(to_unsigned(425,11)) then
-      pipe3_start <= '1';
-    else
-      pipe3_start <= '0';
-    end if;
+	
+	if (level_int = 3) then
+		if pipe1_x_pos <= std_logic_vector(to_unsigned(425,11)) then
+				pipe2_start <= '1';
+		else
+				pipe2_start <= '0';
+		end if;
 
-    if pipe1_x_pos <= std_logic_vector(to_unsigned(425,11)) then
-      pipe2_start <= '1';
-    else
-      pipe2_start <= '0';
-    end if;
+		 if pipe2_x_pos <= std_logic_vector(to_unsigned(425,11)) then
+			pipe3_start <= '1';
+		 else
+			pipe3_start <= '0';
+		 end if;
+		 
+	end if;
+
+    
   end if;
 end process;
 
 
--- bean logic 
-bean_logic : process(clock_25Mhz)
-begin
-  if rising_edge(clock_25Mhz) then
-    bean_r <= bean1_r or bean2_r;
+-- -- bean logic 
+-- bean_logic : process(clock_25Mhz)
+-- begin
+--   if rising_edge(clock_25Mhz) then
+--     bean_r <= bean1_r or bean2_r;
+--     bean_g <= bean1_g or bean2_g;
+--     bean_b <= bean1_b or bean2_b;
+
+    
+
+   
+
+--     -- bean2_start logic
+--     if unsigned(bean1_x_pos) <= 425 then
+--         bean2_start <= '1';
+--     else
+--         bean2_start <= '0';
+--     end if;
+
+--     -- bean_enable logic
+--     if (bean1_enable = '1') or (bean2_enable = '1') then
+--         bean_enable <= '1';
+--     else
+--         bean_enable <= '0';
+--     end if;
+
+--   end if;
+-- end process;
+bean_on <= bean1_on_temp or bean2_on_temp;
+ bean_r <= bean1_r or bean2_r;
     bean_g <= bean1_g or bean2_g;
     bean_b <= bean1_b or bean2_b;
 
-    bean_on <= bean_on_temp;
-
-     -- bean2_start logic
-    if unsigned(bean1_x_pos) <= 425 then
-        bean2_start <= '1';
-    else
-        bean2_start <= '0';
-    end if;
-
-    -- bean_on_temp logic
-    if (bean1_on_temp = '1') or (bean2_on_temp = '1') then
-        bean_on_temp <= '1';
-    else
-        bean_on_temp <= '0';
-    end if;
-
-    -- bean_enable logic
-    if (bean1_enable = '1') or (bean2_enable = '1') then
-        bean_enable <= '1';
-    else
-        bean_enable <= '0';
-    end if;
-
-  end if;
-end process;
 
 
   -- video on
@@ -486,10 +557,15 @@ begin
             red_out <= pipe_r;
             green_out <= pipe_g;
             blue_out <= pipe_b;
+            elsif bean_on = '1' then 
+             red_out <= bean_r;
+            green_out <= bean_g;
+            blue_out <= bean_b;
         elsif bird_bc_on = '1' then 
             red_out <= bird_bc_r;
             green_out <= bird_bc_g;
             blue_out <= bird_bc_b;
+        
         else 
             red_out <= "0000";
             green_out <= "0000";
@@ -535,7 +611,7 @@ begin
 				end case;
 			end if;
 
-			if (reset = '1') then
+			if (reset = '1' or player_dead_temp = '1') then
         player_dead <= '0';
 				lives_int <= 3;
 			end if;

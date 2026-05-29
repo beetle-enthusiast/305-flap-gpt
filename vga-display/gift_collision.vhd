@@ -5,16 +5,16 @@ USE  IEEE.STD_LOGIC_SIGNED.all;
 use ieee.numeric_std.all;
 
 
-ENTITY collision IS
+ENTITY gift_collision IS
 	PORT
-		( clk, vert_sync, bird_bc_on, pipe_on	: IN std_logic;
+		( clk, vert_sync, bird_bc_on, bean_on	: IN std_logic;
           bird_bc_y_pos, bird_bc_size	: IN std_logic_vector(9 DOWNTO 0);
-		  collision, death, pipe_start, bird_bc_enable: OUT std_logic);		
-END collision;
+		  collision, bean_start, bird_bc_enable, bean_hit: OUT std_logic);		
+END gift_collision;
 
-architecture behavior of collision is
+architecture behavior of gift_collision is
 
-SIGNAL collision_temp, death_temp: std_logic := '0';
+SIGNAL collision_temp : std_logic := '0';
 SIGNAL collision_reset : std_logic := '0';
 SIGNAL reset : std_logic:= '0';
 SIGNAL collision_per_frame: std_logic:= '0';
@@ -27,7 +27,6 @@ BEGIN
 Check_Collision: process (clk) 
 
 begin
-	-- Move bird_bc once every clk cycle
 	if (rising_edge(clk)) then
 	
 		if (reset = '1') then
@@ -38,16 +37,12 @@ begin
 			if (collision_reset = '1') then
 				collision_temp <= '0';
 			
-			-- if collision detected with pipes or ceiling
-			elsif ((bird_bc_y_pos <= bird_bc_size) or (bird_bc_on = '1' and pipe_on = '1')) then
+			-- if collision detected with bird
+			elsif (bird_bc_on = '1' and bean_on = '1') then
 				collision_temp <= '1';
 		
-			-- bird hits bottom = dead
-			elsif ( ('0' & bird_bc_y_pos >= CONV_STD_LOGIC_VECTOR(479,10) - bird_bc_size) ) then
-				-- We have hit the bottom => stay still (move zero pixels)
-					death_temp <= '0'; 
 			end if;
-			
+	
 			-- Create reset pulse only once when collision detected
 			if ((collision_per_frame = '1') and (prev_collision_per_frame = '0')) then
 				collision_reset <= '1';
@@ -72,7 +67,7 @@ begin
 	
 		if (reset = '1') then
 			collision_per_frame <= '0';
-			pipe_start <= '1';
+			bean_start <= '1';
 			bird_bc_enable <= '1';
 			
 		else 
@@ -80,10 +75,10 @@ begin
 			collision_per_frame <= collision_temp;
 			
 			if (collision_temp = '1') then
-				pipe_start <= '0';
+				bean_start <= '0';
 				bird_bc_enable <= '0';
 			else 
-				pipe_start <= '1';
+				bean_start <= '1';
 				bird_bc_enable <= '1';
 			end if;
 			
@@ -95,6 +90,5 @@ end process Reset_collision;
 
 --Signal assignments to output
 collision <= collision_temp;
-death <= death_temp;
 
 END behavior;
